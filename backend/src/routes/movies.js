@@ -1,0 +1,565 @@
+const express = require('express');
+const router = express.Router();
+const movieService = require('../services/movieService');
+
+/**
+ * GET /api/movies
+ * Get all movies with optional filters
+ */
+router.get('/', async (req, res) => {
+  try {
+    const { search, limit, offset } = req.query;
+
+    const filters = {
+      search: search || null,
+      limit: limit ? parseInt(limit) : 100,  // Default 100 movies per page
+      offset: offset ? parseInt(offset) : 0
+    };
+
+    const movies = await movieService.getAllMovies(filters);
+
+    // Get total count for pagination
+    const db = require('../db/database');
+    let totalQuery = 'SELECT COUNT(*) as total FROM movies WHERE 1=1';
+    const params = [];
+
+    if (search) {
+      totalQuery += ' AND tvg_name LIKE ?';
+      params.push(`%${search}%`);
+    }
+
+    const totalResult = db.prepare(totalQuery).get(...params);
+    const total = totalResult?.total || 0;
+
+    res.json({
+      success: true,
+      data: movies,
+      count: movies.length,
+      total: total,
+      limit: filters.limit,
+      offset: filters.offset
+    });
+  } catch (error) {
+    console.error('Error fetching movies:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch movies',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/movies/stats
+ * Get movies statistics
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    const stats = await movieService.getMoviesStats();
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error fetching movie stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch statistics',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/movies/config
+ * Get movies configuration (directory)
+ */
+router.get('/config', async (req, res) => {
+  try {
+    const moviesDir = await movieService.getMoviesDirectory();
+
+    res.json({
+      success: true,
+      data: {
+        movies_directory: moviesDir
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching config:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch configuration',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/movies/config
+ * Update movies configuration (directory)
+ */
+router.put('/config', async (req, res) => {
+  try {
+    const { movies_directory } = req.body;
+
+    if (!movies_directory) {
+      return res.status(400).json({
+        success: false,
+        message: 'movies_directory is required'
+      });
+    }
+
+    await movieService.setMoviesDirectory(movies_directory);
+
+    res.json({
+      success: true,
+      message: 'Configuration updated successfully',
+      data: {
+        movies_directory
+      }
+    });
+  } catch (error) {
+    console.error('Error updating config:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update configuration',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/movies/:id
+ * Get single movie by ID
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const movie = await movieService.getMovieById(req.params.id);
+
+    if (!movie) {
+      return res.status(404).json({
+        success: false,
+        message: 'Movie not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: movie
+    });
+  } catch (error) {
+    console.error('Error fetching movie:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch movie',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/movies/:id
+ * Delete movie and its STRM file
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    await movieService.deleteMovie(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Movie deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting movie:', error);
+
+    if (error.message === 'Movie not found') {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete movie',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/movies/rescan
+ * Re-scan filesystem and sync with database
+ */
+router.post('/rescan', async (req, res) => {
+  try {
+    const results = await movieService.rescanFilesystem();
+
+    res.json({
+      success: true,
+      message: 'Filesystem scan completed',
+      data: results
+    });
+  } catch (error) {
+    console.error('Error rescanning filesystem:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to rescan filesystem',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/movies/sync-filesystem
+ * Sync filesystem from database (create/delete .strm files)
+ */
+router.post('/sync-filesystem', async (req, res) => {
+  try {
+    const { remotePath, dryRun } = req.body;
+
+    if (!remotePath) {
+      return res.status(400).json({
+        success: false,
+        message: 'remotePath is required'
+      });
+    }
+
+    const results = await movieService.syncFilesystemFromDb(remotePath, dryRun || false);
+
+    res.json({
+      success: true,
+      message: dryRun ? 'Dry run completed (no changes made)' : 'Filesystem sync completed',
+      data: results
+    });
+  } catch (error) {
+    console.error('Error syncing filesystem:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to sync filesystem',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/movies/toggle-strm-group
+ * Toggle STRM generation for a group_title (create or delete files)
+ * Returns job ID immediately, process runs in background
+ */
+router.post('/toggle-strm-group', async (req, res) => {
+  try {
+    const { groupTitle, enabled, outputDir } = req.body;
+
+    if (!groupTitle) {
+      return res.status(400).json({
+        success: false,
+        message: 'groupTitle is required'
+      });
+    }
+
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'enabled must be a boolean'
+      });
+    }
+
+    if (!outputDir) {
+      return res.status(400).json({
+        success: false,
+        message: 'outputDir is required'
+      });
+    }
+
+    const db = require('../db/database');
+    const jobQueue = require('../services/jobQueue');
+
+    // Get all movies from this group
+    const movies = db.prepare(
+      `SELECT * FROM movies WHERE group_title = ?`
+    ).all(groupTitle);
+
+    if (movies.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No movies found in group "${groupTitle}"`
+      });
+    }
+
+    // Create job
+    const jobId = jobQueue.createJob({
+      type: enabled ? 'create' : 'delete',
+      groupTitle,
+      outputDir,
+      total: movies.length
+    });
+
+    // Start job in background
+    jobQueue.startJob(jobId, async (job, queue) => {
+      const batchSize = 50; // Process 50 movies at a time
+
+      for (let i = 0; i < movies.length; i += batchSize) {
+        // Check if job was cancelled
+        if (job.status === 'cancelled') {
+          console.log(`[JobQueue] Job ${jobId} cancelled, stopping`);
+          break;
+        }
+
+        const batch = movies.slice(i, i + batchSize);
+
+        // Process batch
+        for (const movie of batch) {
+          try {
+            if (enabled) {
+              // CREATE STRM file
+              const result = await movieService.createStrmFile(movie, outputDir);
+              db.prepare(
+                `UPDATE movies
+                 SET folder_path = ?, strm_file_path = ?, strm_enabled = 1, updated_at = CURRENT_TIMESTAMP
+                 WHERE id = ?`
+              ).run(result.folder_path, result.strm_file_path, movie.id);
+              job.created++;
+            } else {
+              // DELETE STRM file
+              // Try to delete file even if paths are NULL in DB (orphaned files)
+              const path = require('path');
+              const movieService = require('../services/movieService');
+
+              // If DB has paths, use them
+              if (movie.folder_path && movie.strm_file_path) {
+                await movieService.deleteStrmFile(movie);
+              } else {
+                // Try to delete orphaned file using movie name
+                // Use the SAME sanitization function as movieService to match file paths
+                const safeName = movieService.sanitizeFilename(movie.tvg_name);
+                const orphanedFolderPath = path.join(outputDir, safeName);
+                const orphanedFilePath = path.join(orphanedFolderPath, `${safeName}.strm`);
+
+                // Create temporary movie object with reconstructed paths
+                const orphanedMovie = {
+                  ...movie,
+                  folder_path: orphanedFolderPath,
+                  strm_file_path: orphanedFilePath
+                };
+
+                try {
+                  await movieService.deleteStrmFile(orphanedMovie);
+                  console.log(`[JobQueue] Deleted orphaned STRM for "${movie.tvg_name}"`);
+                } catch (error) {
+                  // Ignore errors for orphaned files (might not exist)
+                  if (error.code !== 'ENOENT') {
+                    console.warn(`[JobQueue] Could not delete orphaned STRM for "${movie.tvg_name}":`, error.message);
+                  }
+                }
+              }
+
+              db.prepare(
+                `UPDATE movies
+                 SET folder_path = NULL, strm_file_path = NULL, strm_enabled = 0, updated_at = CURRENT_TIMESTAMP
+                 WHERE id = ?`
+              ).run(movie.id);
+              job.deleted++;
+            }
+
+            job.processed++;
+          } catch (error) {
+            console.error(`[JobQueue] Error processing "${movie.tvg_name}":`, error);
+            job.errors++;
+            job.errorDetails.push({
+              movie: movie.tvg_name,
+              error: error.message
+            });
+          }
+        }
+
+        // Small delay between batches to avoid overwhelming filesystem
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+    });
+
+    // Respond immediately with job ID
+    res.json({
+      success: true,
+      message: 'Job started',
+      jobId,
+      total: movies.length
+    });
+  } catch (error) {
+    console.error('Error starting STRM job:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to start job',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/movies/jobs/:jobId
+ * Get job status and progress
+ */
+router.get('/jobs/:jobId', (req, res) => {
+  try {
+    const jobQueue = require('../services/jobQueue');
+    const job = jobQueue.getJob(req.params.jobId);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found'
+      });
+    }
+
+    // Calculate progress percentage
+    const progress = job.total > 0 ? Math.round((job.processed / job.total) * 100) : 0;
+
+    res.json({
+      success: true,
+      job: {
+        id: job.id,
+        type: job.type,
+        groupTitle: job.groupTitle,
+        status: job.status,
+        progress,
+        total: job.total,
+        processed: job.processed,
+        created: job.created,
+        deleted: job.deleted,
+        errors: job.errors,
+        startedAt: job.startedAt,
+        completedAt: job.completedAt,
+        error: job.error
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching job:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch job',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/movies/jobs/:jobId
+ * Cancel a running job
+ */
+router.delete('/jobs/:jobId', (req, res) => {
+  try {
+    const jobQueue = require('../services/jobQueue');
+    const job = jobQueue.getJob(req.params.jobId);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found'
+      });
+    }
+
+    if (job.status !== 'running') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot cancel job with status: ${job.status}`
+      });
+    }
+
+    jobQueue.cancelJob(req.params.jobId);
+
+    res.json({
+      success: true,
+      message: 'Job cancelled'
+    });
+  } catch (error) {
+    console.error('Error cancelling job:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to cancel job',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/movies/generate-strm
+ * Generate STRM files for selected group_titles (DEPRECATED - use toggle-strm-group)
+ */
+router.post('/generate-strm', async (req, res) => {
+  try {
+    const { groupTitles, outputDir } = req.body;
+
+    if (!groupTitles || !Array.isArray(groupTitles) || groupTitles.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'groupTitles array is required and cannot be empty'
+      });
+    }
+
+    if (!outputDir) {
+      return res.status(400).json({
+        success: false,
+        message: 'outputDir is required'
+      });
+    }
+
+    const db = require('../db/database');
+    const stats = {
+      total: 0,
+      created: 0,
+      updated: 0,
+      errors: 0,
+      skipped: 0
+    };
+
+    // Get all movies from selected groups
+    const placeholders = groupTitles.map(() => '?').join(',');
+    const movies = db.prepare(
+      `SELECT * FROM movies WHERE group_title IN (${placeholders})`
+    ).all(...groupTitles);
+
+    stats.total = movies.length;
+
+    // Generate STRM for each movie
+    for (const movie of movies) {
+      try {
+        // Skip if already has STRM paths (already generated)
+        if (movie.folder_path && movie.strm_file_path) {
+          stats.skipped++;
+          continue;
+        }
+
+        // Create STRM file
+        const result = await movieService.createStrmFile(movie, outputDir);
+
+        // Update DB with paths
+        db.prepare(
+          `UPDATE movies
+           SET folder_path = ?, strm_file_path = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`
+        ).run(result.folder_path, result.strm_file_path, movie.id);
+
+        stats.created++;
+      } catch (error) {
+        console.error(`[API] Error generating STRM for "${movie.tvg_name}":`, error);
+        stats.errors++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Generated ${stats.created} STRM files`,
+      stats
+    });
+  } catch (error) {
+    console.error('Error generating STRM files:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate STRM files',
+      error: error.message
+    });
+  }
+});
+
+module.exports = router;

@@ -1,0 +1,14 @@
+services:
+  iptv-manager:
+    build: .
+    container_name: iptv-manager
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./epg-grabber:/app/epg-grabber
+    environment:
+      - NODE_ENV=production
+      - DB_PATH=/app/data/database.sqlite
+      - OUTPUT_PATH=/app/data/output
+    restart: unless-stopped
