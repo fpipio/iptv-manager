@@ -1,0 +1,43 @@
+# === Node.js / frontend ===
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+
+# === Backend Python ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+
+# === Output / dati temporanei ===
+data/
+epg-grabber/temp/
+epg-grabber/tests/__data__/
+*.tar.gz
+*.m3u
+*.xml
+logs/
+
+# === IDE / editor ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Testing / coverage ===
+coverage/
+.nyc_output/
+
+# === Temporary files ===
+tmp/
+temp/
+.claude/
