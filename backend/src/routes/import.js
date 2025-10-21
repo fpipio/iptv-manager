@@ -185,12 +185,14 @@ router.post('/movies/upload', upload.single('file'), async (req, res) => {
       });
 
     // Return jobId immediately for progress tracking
-    res.json({
+    const response = {
       success: true,
       jobId,
       total: totalMovies,
       message: 'Import started'
-    });
+    };
+    console.log('[API] Returning movie import response (upload):', response);
+    res.json(response);
   } catch (error) {
     console.error('Movies import error:', error);
     res.status(500).json({ error: error.message });
@@ -237,12 +239,14 @@ router.post('/movies/url', async (req, res) => {
       });
 
     // Return jobId immediately for progress tracking
-    res.json({
+    const apiResponse = {
       success: true,
       jobId,
       total: totalMovies,
       message: 'Import started'
-    });
+    };
+    console.log('[API] Returning movie import response (url):', apiResponse);
+    res.json(apiResponse);
   } catch (error) {
     console.error('Movies import error:', error);
     res.status(500).json({ error: error.message });

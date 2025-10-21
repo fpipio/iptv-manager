@@ -298,16 +298,20 @@ const progressPercentage = computed(() => {
 
 const pollJobStatus = async (jobId) => {
   try {
+    console.log('[ImportView] Polling job status for:', jobId)
     const response = await axios.get(`/api/movies/jobs/${jobId}`)
-    const job = response.data
+    const job = response.data.job || response.data  // Handle both formats
+    console.log('[ImportView] Job status response:', job)
 
     if (job) {
       importProgress.value = {
         processed: job.processed || 0,
         total: job.total || 0
       }
+      console.log('[ImportView] Progress updated:', importProgress.value)
 
       if (job.status === 'completed') {
+        console.log('[ImportView] Job completed!')
         stopPolling()
         importing.value = false
         statusType.value = 'success'
@@ -320,6 +324,7 @@ const pollJobStatus = async (jobId) => {
           skipped: job.skipped
         }
       } else if (job.status === 'failed') {
+        console.log('[ImportView] Job failed:', job.error)
         stopPolling()
         importing.value = false
         statusType.value = 'error'
@@ -327,11 +332,12 @@ const pollJobStatus = async (jobId) => {
       }
     }
   } catch (error) {
-    console.error('Failed to poll job status:', error)
+    console.error('[ImportView] Failed to poll job status:', error)
   }
 }
 
 const startPolling = (jobId) => {
+  console.log('[ImportView] Starting polling for jobId:', jobId)
   importJobId.value = jobId
   pollInterval.value = setInterval(() => {
     pollJobStatus(jobId)
@@ -414,10 +420,12 @@ const performImport = async (type, duplicateStrategy = 'replace') => {
 
     // New API returns jobId - start polling
     if (response.data.jobId) {
+      console.log('[ImportView] Import started with jobId:', response.data.jobId, 'total:', response.data.total)
       importProgress.value.total = response.data.total
       startPolling(response.data.jobId)
     } else {
       // Legacy response format (shouldn't happen with new API)
+      console.log('[ImportView] Legacy response format received')
       statusType.value = 'success'
       statusMessage.value = response.data.message
       importStats.value = response.data.stats

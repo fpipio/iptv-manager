@@ -24,14 +24,14 @@
 
 **Ultimo Aggiornamento**: 2025-10-21
 
-**Versione Corrente**: v0.9.1
+**Versione Corrente**: v0.9.2
 
-**Fase Corrente**: ✅ **Fase 5 (Parziale)** - Ricerca Canali Implementata
+**Fase Corrente**: ✅ **Fase 5 (Parziale)** - Ricerca Canali + Import Asincrono Implementati
 
 **Prossima Fase**: Completare Fase 5 (Filtri avanzati) o Fase 3.2 (Serie TV)
 
 ### Funzionalità Operative
-- ✅ Import M3U (file upload + URL) con dual-tab interface (TV | Movies)
+- ✅ **Import M3U asincrono con progress bar** (file upload + URL, dual-tab TV|Movies, batch processing 500 items)
 - ✅ Gestione completa canali TV (CRUD, drag & drop, bulk edit, selezione multipla)
 - ✅ Gestione gruppi (CRUD, riordinamento, gruppo speciale "Unassigned")
 - ✅ **Ricerca canali real-time** (search bar con filtro su nome, tvg-id, logo URL)
@@ -106,7 +106,8 @@
 - Import film da M3U con rilevamento automatico (`/movie/` URL pattern)
 - Generazione file `.strm` con struttura FLAT
 - **Job Queue asincrono** per operazioni filesystem non bloccanti
-- Progress tracking real-time con barre animate
+- **Import asincrono con batch processing** (500 items/batch, non blocca server su 30k+ items)
+- **Progress tracking real-time** con progress bar animata e polling (500ms interval)
 - MoviesView con caricamento progressivo ottimizzato (batch 1000)
 - 15+ endpoints API completi
 - Checkbox inline per toggle STRM generation per gruppo
@@ -284,6 +285,14 @@ is_name_overridden INTEGER  -- Flag per sapere quale usare
   - `/series/` → serie TV (ESCLUSO per ora)
   - Altro → TV channel (importato in tabella `channels`)
 
+### Import Asincrono - Async Batch Processing
+- **Batch size**: 500 items per batch (configurabile)
+- **Non-blocking**: Usa `setImmediate()` tra batch per yield event loop
+- **Progress tracking**: Job queue con polling frontend (500ms)
+- **Transazioni**: SQLite transaction per batch (rollback su errore)
+- **Performance**: 30k movies importati in ~20s senza bloccare server
+- **Endpoint**: Restituisce `jobId` immediatamente, import procede in background
+
 ### Export M3U - Generator Logic
 ```javascript
 const name = is_name_overridden ? custom_tvg_name : imported_tvg_name;
@@ -362,9 +371,8 @@ const group = group_title.name; // Usa sempre nome gruppo corrente
 ## 💡 Idee Future (Backlog)
 
 ### UX Improvements
-- [ ] Progress bar per import M3U (come Movies STRM generation)
 - [ ] Dark/Light mode themes
-- [ ] Drag & drop file upload
+- [ ] Drag & drop file upload (già implementato su ImportView)
 - [ ] Keyboard shortcuts (es: `Ctrl+S` per export)
 
 ### Features

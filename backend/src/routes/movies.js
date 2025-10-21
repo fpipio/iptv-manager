@@ -757,6 +757,8 @@ router.get('/jobs/:jobId', (req, res) => {
     const { jobId } = req.params;
     const job = jobQueue.getJob(jobId);
 
+    console.log(`[API] Job status request for ${jobId}: ${job ? job.status : 'NOT FOUND'}`);
+
     if (!job) {
       return res.status(404).json({
         success: false,
