@@ -23,9 +23,55 @@
       </div>
     </div>
 
+    <!-- Search Bar -->
+    <div class="mb-4">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search channels by name, logo URL, or tvg-id..."
+          class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
+        <div v-if="searchQuery" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+          <button
+            @click="searchQuery = ''"
+            class="text-gray-400 hover:text-gray-600"
+            title="Clear search"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div v-if="searchQuery && filteredChannelsCount < channels.length" class="mt-2 text-sm text-gray-600">
+        Showing {{ filteredChannelsCount }} of {{ channels.length }} channels
+      </div>
+    </div>
+
     <!-- Loading state -->
     <div v-if="loading" class="text-center py-12">
       <p class="text-gray-600">Loading channels...</p>
+    </div>
+
+    <!-- No results message -->
+    <div v-else-if="searchQuery && filteredChannelsCount === 0" class="text-center py-12">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No channels found</h3>
+      <p class="mt-1 text-sm text-gray-500">Try adjusting your search query</p>
+      <button
+        @click="searchQuery = ''"
+        class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+      >
+        Clear Search
+      </button>
     </div>
 
     <!-- Groups list -->
@@ -39,6 +85,7 @@
       >
         <template #item="{ element: group }">
       <div
+        v-if="!searchQuery || getGroupChannelCount(group.id) > 0"
         :class="[
           'shadow rounded-lg overflow-hidden',
           isUnassignedGroup(group) ? 'bg-orange-50 border-2 border-orange-300' : 'bg-white'
@@ -344,7 +391,7 @@
 
 <script setup>
 // v0.3.0 - Fixed group creation with is_special column
-import { ref, onMounted, onActivated, nextTick, reactive } from 'vue'
+import { ref, onMounted, onActivated, nextTick, reactive, computed, watch } from 'vue'
 import axios from 'axios'
 import draggable from 'vuedraggable'
 import ChannelEditModal from '../components/ChannelEditModal.vue'
@@ -372,6 +419,7 @@ const showDeleteOptionsModal = ref(false)
 const groupToDelete = ref(null)
 const deleteOption = ref('unassign')
 const deleteTargetGroup = ref('')
+const searchQuery = ref('')
 
 const loadData = async () => {
   loading.value = true
@@ -399,13 +447,33 @@ const isUnassignedGroup = (group) => {
   return group && group.id === UNASSIGNED_GROUP_ID
 }
 
+// Filter channels based on search query
+const matchesSearch = (channel) => {
+  if (!searchQuery.value) return true
+
+  const query = searchQuery.value.toLowerCase()
+  const name = (channel.is_name_overridden ? channel.custom_tvg_name : channel.imported_tvg_name)?.toLowerCase() || ''
+  const tvgId = channel.tvg_id?.toLowerCase() || ''
+  const logo = (channel.is_logo_overridden ? channel.custom_tvg_logo : channel.imported_tvg_logo)?.toLowerCase() || ''
+
+  return name.includes(query) || tvgId.includes(query) || logo.includes(query)
+}
+
 const getGroupChannels = (groupId) => {
-  return channels.value.filter(ch => ch.custom_group_id === groupId)
+  return channels.value.filter(ch =>
+    ch.custom_group_id === groupId && matchesSearch(ch)
+  )
 }
 
 const getGroupChannelCount = (groupId) => {
   return getGroupChannels(groupId).length
 }
+
+// Computed property to count total filtered channels
+const filteredChannelsCount = computed(() => {
+  if (!searchQuery.value) return channels.value.length
+  return channels.value.filter(ch => matchesSearch(ch)).length
+})
 
 const toggleGroupExpanded = (groupId) => {
   if (expandedGroups.value.has(groupId)) {
@@ -712,6 +780,18 @@ const executeBulkMove = async () => {
     showError('Failed to move channels')
   }
 }
+
+// Auto-expand groups with matches when searching
+watch(searchQuery, (newQuery) => {
+  if (newQuery) {
+    // Expand all groups that have matching channels
+    groups.value.forEach(group => {
+      if (getGroupChannelCount(group.id) > 0) {
+        expandedGroups.value.add(group.id)
+      }
+    })
+  }
+})
 
 onMounted(() => {
   loadData()

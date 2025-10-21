@@ -24,16 +24,17 @@
 
 **Ultimo Aggiornamento**: 2025-10-21
 
-**Versione Corrente**: v0.9.0
+**Versione Corrente**: v0.9.1
 
-**Fase Corrente**: ✅ **Completata Fase 4.5** - EPG Multi-Source Matching + Production Deployment
+**Fase Corrente**: ✅ **Fase 5 (Parziale)** - Ricerca Canali Implementata
 
-**Prossima Fase**: Fase 5 (Ricerca/Filtri) o Fase 3.2 (Serie TV)
+**Prossima Fase**: Completare Fase 5 (Filtri avanzati) o Fase 3.2 (Serie TV)
 
 ### Funzionalità Operative
 - ✅ Import M3U (file upload + URL) con dual-tab interface (TV | Movies)
 - ✅ Gestione completa canali TV (CRUD, drag & drop, bulk edit, selezione multipla)
 - ✅ Gestione gruppi (CRUD, riordinamento, gruppo speciale "Unassigned")
+- ✅ **Ricerca canali real-time** (search bar con filtro su nome, tvg-id, logo URL)
 - ✅ **Gestione film con generazione .strm files** (job queue asincrono, progress tracking)
 - ✅ **EPG Multi-Source Matching System** (auto-matching, custom XML, grab ottimizzato)
 - ✅ **Gestione duplicati tvg-ID avanzata** (pre-import analysis, modal strategia, tracking permanente)
@@ -44,7 +45,7 @@
 
 ### Funzionalità Mancanti
 - ❌ Gestione Serie TV
-- ❌ Ricerca e filtri
+- ❌ Filtri avanzati (per gruppo, stato, modifiche)
 - ❌ Schedulazione automatica EPG
 
 ---
@@ -147,20 +148,29 @@
 ---
 
 ### Fase 5 - Ricerca e Filtri
-**Status**: ❌ Non iniziata
+**Status**: 🟡 In Corso (50% completata)
 
 **Obiettivo**: Ricerca globale e filtri avanzati
 
-#### 5.1 Backend
-- [ ] Endpoint `/api/channels/search?q=query`
-- [ ] Filtri per gruppo, stato (exported/hidden), modifiche (overridden)
-- [ ] Full-text search su nomi e logo URL
-
-#### 5.2 Frontend
-- [ ] Barra ricerca globale con debouncing
-- [ ] Filtri sidebar per gruppo/stato
-- [ ] Risultati evidenziati (highlight match)
+#### 5.1 Frontend Search (✅ Completato)
+- [x] **Barra ricerca globale su ManageView**
+  - Search bar con icona e clear button
+  - Filtro real-time su nome canale, tvg-id e logo URL
+  - Counter "Showing X of Y channels"
+  - Gruppi senza match nascosti automaticamente
+  - Auto-expand gruppi con risultati
+  - Messaggio "No results found" con clear action
 - [ ] Ricerca real-time su MoviesView
+
+#### 5.2 Backend Search API (❌ Non necessario per v1)
+- [ ] Endpoint `/api/channels/search?q=query` (opzionale - filtro frontend sufficiente)
+- [ ] Full-text search database-side (performance optimization)
+
+#### 5.3 Filtri Avanzati (❌ Non iniziati)
+- [ ] Filtri sidebar per gruppo
+- [ ] Filtri per stato (exported/hidden)
+- [ ] Filtri per modifiche (overridden channels)
+- [ ] Combinazione multipla filtri
 
 ---
 
