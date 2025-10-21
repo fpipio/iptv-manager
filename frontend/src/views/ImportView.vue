@@ -237,7 +237,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onUnmounted } from 'vue'
 import axios from 'axios'
 import DuplicateStrategyModal from '../components/DuplicateStrategyModal.vue'
 
@@ -291,6 +291,61 @@ const formatFileSize = (bytes) => {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
+const progressPercentage = computed(() => {
+  if (!importProgress.value.total) return 0
+  return Math.round((importProgress.value.processed / importProgress.value.total) * 100)
+})
+
+const pollJobStatus = async (jobId) => {
+  try {
+    const response = await axios.get(`/api/movies/jobs/${jobId}`)
+    const job = response.data
+
+    if (job) {
+      importProgress.value = {
+        processed: job.processed || 0,
+        total: job.total || 0
+      }
+
+      if (job.status === 'completed') {
+        stopPolling()
+        importing.value = false
+        statusType.value = 'success'
+        statusMessage.value = `Import completed: ${job.created || 0} created, ${job.updated || 0} updated`
+        importStats.value = {
+          total: job.total,
+          new: job.created,
+          updated: job.updated,
+          deleted: job.deleted,
+          skipped: job.skipped
+        }
+      } else if (job.status === 'failed') {
+        stopPolling()
+        importing.value = false
+        statusType.value = 'error'
+        statusMessage.value = job.error || 'Import failed'
+      }
+    }
+  } catch (error) {
+    console.error('Failed to poll job status:', error)
+  }
+}
+
+const startPolling = (jobId) => {
+  importJobId.value = jobId
+  pollInterval.value = setInterval(() => {
+    pollJobStatus(jobId)
+  }, 500) // Poll every 500ms
+}
+
+const stopPolling = () => {
+  if (pollInterval.value) {
+    clearInterval(pollInterval.value)
+    pollInterval.value = null
+  }
+  importJobId.value = null
+}
+
 const uploadFile = async () => {
   if (!selectedFile.value) return
 
@@ -326,6 +381,7 @@ const performImport = async (type, duplicateStrategy = 'replace') => {
   importing.value = true
   statusMessage.value = ''
   importStats.value = null
+  importProgress.value = { processed: 0, total: 0 }
 
   try {
     let response
@@ -356,13 +412,20 @@ const performImport = async (type, duplicateStrategy = 'replace') => {
       m3uUrl.value = ''
     }
 
-    statusType.value = 'success'
-    statusMessage.value = response.data.message
-    importStats.value = response.data.stats
+    // New API returns jobId - start polling
+    if (response.data.jobId) {
+      importProgress.value.total = response.data.total
+      startPolling(response.data.jobId)
+    } else {
+      // Legacy response format (shouldn't happen with new API)
+      statusType.value = 'success'
+      statusMessage.value = response.data.message
+      importStats.value = response.data.stats
+      importing.value = false
+    }
   } catch (error) {
     statusType.value = 'error'
     statusMessage.value = error.response?.data?.error || 'Import failed'
-  } finally {
     importing.value = false
   }
 }
@@ -538,4 +601,9 @@ const resetAll = async () => {
     resetting.value = false
   }
 }
+
+// Cleanup on component unmount
+onUnmounted(() => {
+  stopPolling()
+})
 </script>
