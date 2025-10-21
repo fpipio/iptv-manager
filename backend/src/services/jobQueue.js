@@ -20,13 +20,16 @@ class JobQueue {
     const jobId = uuidv4();
     const job = {
       id: jobId,
-      type: jobData.type, // 'create' | 'delete'
-      groupTitle: jobData.groupTitle,
-      outputDir: jobData.outputDir,
+      type: jobData.type, // 'create' | 'delete' | 'import_channels' | 'import_movies'
+      groupTitle: jobData.groupTitle || null,
+      outputDir: jobData.outputDir || null,
+      description: jobData.description || null,
       total: jobData.total,
       processed: 0,
       created: 0,
+      updated: 0,
       deleted: 0,
+      skipped: 0,
       errors: 0,
       status: 'pending', // 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
       startedAt: null,
@@ -36,7 +39,8 @@ class JobQueue {
     };
 
     this.jobs.set(jobId, job);
-    console.log(`[JobQueue] Created job ${jobId} for group "${jobData.groupTitle}" (${jobData.type})`);
+    const desc = jobData.description || (jobData.groupTitle ? `group "${jobData.groupTitle}"` : 'import');
+    console.log(`[JobQueue] Created job ${jobId} for ${desc} (${jobData.type})`);
     return jobId;
   }
 

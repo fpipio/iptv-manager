@@ -3,6 +3,8 @@ const router = express.Router();
 const multer = require('multer');
 const axios = require('axios');
 const importService = require('../services/importService');
+const jobQueue = require('../services/jobQueue');
+const { parseM3U } = require('../services/m3uParser');
 
 // Configure multer for file uploads
 const upload = multer({
@@ -61,9 +63,36 @@ router.post('/channels/upload', upload.single('file'), async (req, res) => {
 
     const content = req.file.buffer.toString('utf8');
     const duplicateStrategy = req.body.duplicateStrategy || 'replace';
-    const result = await importService.importChannelsOnly(content, duplicateStrategy);
 
-    res.json(result);
+    // Quick parse to get total count
+    const parsed = parseM3U(content);
+    const totalChannels = parsed.channels.length;
+
+    // Create job for progress tracking
+    const jobId = jobQueue.createJob({
+      type: 'import_channels',
+      description: 'Importing TV channels',
+      total: totalChannels
+    });
+
+    // Start import in background
+    importService.importChannelsOnly(content, duplicateStrategy, jobId)
+      .catch(error => {
+        console.error('Background import failed:', error);
+        jobQueue.updateJob(jobId, {
+          status: 'failed',
+          error: error.message,
+          completedAt: new Date().toISOString()
+        });
+      });
+
+    // Return jobId immediately for progress tracking
+    res.json({
+      success: true,
+      jobId,
+      total: totalChannels,
+      message: 'Import started'
+    });
   } catch (error) {
     console.error('Channels import error:', error);
     res.status(500).json({ error: error.message });
@@ -85,8 +114,37 @@ router.post('/channels/url', async (req, res) => {
       maxContentLength: 50 * 1024 * 1024 // 50MB
     });
 
-    const result = await importService.importChannelsOnly(response.data, duplicateStrategy || 'replace');
-    res.json(result);
+    const content = response.data;
+
+    // Quick parse to get total count
+    const parsed = parseM3U(content);
+    const totalChannels = parsed.channels.length;
+
+    // Create job for progress tracking
+    const jobId = jobQueue.createJob({
+      type: 'import_channels',
+      description: 'Importing TV channels from URL',
+      total: totalChannels
+    });
+
+    // Start import in background
+    importService.importChannelsOnly(content, duplicateStrategy || 'replace', jobId)
+      .catch(error => {
+        console.error('Background import failed:', error);
+        jobQueue.updateJob(jobId, {
+          status: 'failed',
+          error: error.message,
+          completedAt: new Date().toISOString()
+        });
+      });
+
+    // Return jobId immediately for progress tracking
+    res.json({
+      success: true,
+      jobId,
+      total: totalChannels,
+      message: 'Import started'
+    });
   } catch (error) {
     console.error('Channels import error:', error);
     res.status(500).json({ error: error.message });
@@ -103,9 +161,36 @@ router.post('/movies/upload', upload.single('file'), async (req, res) => {
     }
 
     const content = req.file.buffer.toString('utf8');
-    const result = await importService.importMoviesOnly(content);
 
-    res.json(result);
+    // Quick parse to get total count
+    const parsed = parseM3U(content);
+    const totalMovies = parsed.movies.length;
+
+    // Create job for progress tracking
+    const jobId = jobQueue.createJob({
+      type: 'import_movies',
+      description: 'Importing movies',
+      total: totalMovies
+    });
+
+    // Start import in background
+    importService.importMoviesOnly(content, jobId)
+      .catch(error => {
+        console.error('Background import failed:', error);
+        jobQueue.updateJob(jobId, {
+          status: 'failed',
+          error: error.message,
+          completedAt: new Date().toISOString()
+        });
+      });
+
+    // Return jobId immediately for progress tracking
+    res.json({
+      success: true,
+      jobId,
+      total: totalMovies,
+      message: 'Import started'
+    });
   } catch (error) {
     console.error('Movies import error:', error);
     res.status(500).json({ error: error.message });
@@ -127,8 +212,37 @@ router.post('/movies/url', async (req, res) => {
       maxContentLength: 50 * 1024 * 1024 // 50MB
     });
 
-    const result = await importService.importMoviesOnly(response.data);
-    res.json(result);
+    const content = response.data;
+
+    // Quick parse to get total count
+    const parsed = parseM3U(content);
+    const totalMovies = parsed.movies.length;
+
+    // Create job for progress tracking
+    const jobId = jobQueue.createJob({
+      type: 'import_movies',
+      description: 'Importing movies from URL',
+      total: totalMovies
+    });
+
+    // Start import in background
+    importService.importMoviesOnly(content, jobId)
+      .catch(error => {
+        console.error('Background import failed:', error);
+        jobQueue.updateJob(jobId, {
+          status: 'failed',
+          error: error.message,
+          completedAt: new Date().toISOString()
+        });
+      });
+
+    // Return jobId immediately for progress tracking
+    res.json({
+      success: true,
+      jobId,
+      total: totalMovies,
+      message: 'Import started'
+    });
   } catch (error) {
     console.error('Movies import error:', error);
     res.status(500).json({ error: error.message });

@@ -2,6 +2,7 @@ const db = require('../db/database');
 const { v4: uuidv4 } = require('uuid');
 const { parseM3U } = require('./m3uParser');
 const movieService = require('./movieService');
+const jobQueue = require('./jobQueue');
 
 /**
  * Find or create a group by name
@@ -45,12 +46,20 @@ function getNextSortOrder(groupId) {
  * Import only TV channels from M3U content
  * @param {string} content - M3U file content
  * @param {string} duplicateStrategy - 'replace' (default), 'skip', or 'rename'
+ * @param {string} jobId - Optional job ID for progress tracking
  */
-async function importChannelsOnly(content, duplicateStrategy = 'replace') {
+async function importChannelsOnly(content, duplicateStrategy = 'replace', jobId = null) {
   const parsed = parseM3U(content);
   const { channels } = parsed;
 
   if (channels.length === 0) {
+    if (jobId) {
+      jobQueue.updateJob(jobId, {
+        status: 'failed',
+        error: 'No TV channels found in M3U file',
+        completedAt: new Date().toISOString()
+      });
+    }
     return {
       success: false,
       message: 'No TV channels found in M3U file'
@@ -237,9 +246,19 @@ async function importChannelsOnly(content, duplicateStrategy = 'replace') {
       throw error;
     }
 
+    // Update job progress
+    const processed = Math.min(i + BATCH_SIZE, channels.length);
+    if (jobId) {
+      jobQueue.updateJob(jobId, {
+        processed,
+        created: newChannels,
+        updated: updatedChannels,
+        skipped: skippedChannels
+      });
+    }
+
     // Progress logging
     if ((i + BATCH_SIZE) % PROGRESS_INTERVAL === 0 || i + BATCH_SIZE >= channels.length) {
-      const processed = Math.min(i + BATCH_SIZE, channels.length);
       const percentage = ((processed / channels.length) * 100).toFixed(1);
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       console.log(`[ImportService] Progress: ${processed}/${channels.length} (${percentage}%) - ${elapsed}s elapsed`);
@@ -253,6 +272,17 @@ async function importChannelsOnly(content, duplicateStrategy = 'replace') {
 
   const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`[ImportService] Import completed in ${totalTime}s`);
+
+  // Mark job as completed
+  if (jobId) {
+    jobQueue.updateJob(jobId, {
+      status: 'completed',
+      completedAt: new Date().toISOString(),
+      created: newChannels,
+      updated: updatedChannels,
+      skipped: skippedChannels
+    });
+  }
 
   return {
     success: true,
@@ -272,11 +302,18 @@ async function importChannelsOnly(content, duplicateStrategy = 'replace') {
 /**
  * Import only movies from M3U content
  */
-async function importMoviesOnly(content) {
+async function importMoviesOnly(content, jobId = null) {
   const parsed = parseM3U(content);
   const { movies } = parsed;
 
   if (movies.length === 0) {
+    if (jobId) {
+      jobQueue.updateJob(jobId, {
+        status: 'failed',
+        error: 'No movies found in M3U file',
+        completedAt: new Date().toISOString()
+      });
+    }
     return {
       success: false,
       message: 'No movies found in M3U file'
@@ -292,9 +329,16 @@ async function importMoviesOnly(content) {
   };
 
   try {
-    movieStats = await movieService.syncMoviesFromM3u(movies);
+    movieStats = await movieService.syncMoviesFromM3u(movies, jobId);
   } catch (error) {
     console.error('Movies import failed:', error);
+    if (jobId) {
+      jobQueue.updateJob(jobId, {
+        status: 'failed',
+        error: error.message,
+        completedAt: new Date().toISOString()
+      });
+    }
     throw error;
   }
 

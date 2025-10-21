@@ -166,9 +166,10 @@ async function deleteStrmFile(movie) {
 /**
  * Sync movies from M3U import
  * @param {Array} parsedMovies - Array of movie objects from M3U parser
+ * @param {string} jobId - Optional job ID for progress tracking
  * @returns {Promise<Object>} Sync statistics
  */
-async function syncMoviesFromM3u(parsedMovies) {
+async function syncMoviesFromM3u(parsedMovies, jobId = null) {
   const stats = {
     total: parsedMovies.length,
     created: 0,
@@ -242,9 +243,19 @@ async function syncMoviesFromM3u(parsedMovies) {
 
     processBatch(batch);
 
+    // Update job progress
+    const processed = Math.min(i + BATCH_SIZE, parsedMovies.length);
+    if (jobId) {
+      const jobQueue = require('./jobQueue');
+      jobQueue.updateJob(jobId, {
+        processed,
+        created: stats.created,
+        updated: stats.updated
+      });
+    }
+
     // Progress logging every 1000 movies
     if ((i + BATCH_SIZE) % PROGRESS_INTERVAL === 0 || i + BATCH_SIZE >= parsedMovies.length) {
-      const processed = Math.min(i + BATCH_SIZE, parsedMovies.length);
       const percentage = ((processed / parsedMovies.length) * 100).toFixed(1);
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       console.log(`[MovieService] Progress: ${processed}/${parsedMovies.length} (${percentage}%) - ${elapsed}s elapsed`);
@@ -290,6 +301,19 @@ async function syncMoviesFromM3u(parsedMovies) {
 
   const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`[MovieService] Database sync completed in ${totalTime}s:`, stats);
+
+  // Mark job as completed
+  if (jobId) {
+    const jobQueue = require('./jobQueue');
+    jobQueue.updateJob(jobId, {
+      status: 'completed',
+      completedAt: new Date().toISOString(),
+      created: stats.created,
+      updated: stats.updated,
+      deleted: stats.deleted
+    });
+  }
+
   return stats;
 }
 

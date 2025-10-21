@@ -104,6 +104,20 @@
         </button>
       </div>
 
+      <!-- Progress bar -->
+      <div v-if="importing && importJobId" class="mt-4">
+        <div class="flex justify-between text-sm text-gray-600 mb-2">
+          <span>Importing...</span>
+          <span>{{ importProgress.processed }} / {{ importProgress.total }} ({{ progressPercentage }}%)</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div
+            class="bg-blue-600 h-3 transition-all duration-300 ease-out"
+            :style="{ width: progressPercentage + '%' }"
+          ></div>
+        </div>
+      </div>
+
       <!-- Status message -->
       <div v-if="statusMessage" :class="statusType === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'" class="mt-4 p-4 rounded-md">
         <p class="font-medium">{{ statusMessage }}</p>
@@ -237,6 +251,9 @@ const resetting = ref(false)
 const statusMessage = ref('')
 const statusType = ref('')
 const importStats = ref(null)
+const importJobId = ref(null)
+const importProgress = ref({ processed: 0, total: 0 })
+const pollInterval = ref(null)
 const showDuplicateModal = ref(false)
 const analysisResult = ref(null)
 const pendingImportType = ref(null) // 'file' or 'url'
