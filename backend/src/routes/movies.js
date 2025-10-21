@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 const movieService = require('../services/movieService');
+const jobQueue = require('../services/jobQueue');
 
 /**
  * GET /api/movies
@@ -742,6 +743,33 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete movie',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/movies/jobs/:jobId
+ * Get job status for progress tracking
+ */
+router.get('/jobs/:jobId', (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const job = jobQueue.getJob(jobId);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found'
+      });
+    }
+
+    res.json(job);
+  } catch (error) {
+    console.error('Error fetching job status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch job status',
       error: error.message
     });
   }
