@@ -57,17 +57,27 @@ async function importChannelsOnly(content, duplicateStrategy = 'replace') {
     };
   }
 
+  console.log(`[ImportService] Importing ${channels.length} TV channels`);
+  const startTime = Date.now();
+
   let newChannels = 0;
   let updatedChannels = 0;
   let skippedChannels = 0;
   let renamedChannels = 0;
   const renamedChannelsList = []; // Track renamed channels with details
 
-  const importTransaction = db.transaction((parsedChannels) => {
-    const now = new Date().toISOString();
-    const processedTvgIds = new Set(); // Track tvg_ids processed in THIS transaction
+  // Process in batches to avoid blocking event loop
+  const BATCH_SIZE = 500;
+  const PROGRESS_INTERVAL = 1000;
+  const processedTvgIds = new Set(); // Track tvg_ids across all batches
 
-    for (const channel of parsedChannels) {
+  for (let i = 0; i < channels.length; i += BATCH_SIZE) {
+    const batch = channels.slice(i, Math.min(i + BATCH_SIZE, channels.length));
+
+    const importTransaction = db.transaction((parsedChannels) => {
+      const now = new Date().toISOString();
+
+      for (const channel of parsedChannels) {
       let tvgIdToUse = channel.tvgId;
 
       // Check for duplicate WITHIN the same file (already processed in this transaction)
@@ -220,12 +230,29 @@ async function importChannelsOnly(content, duplicateStrategy = 'replace') {
     }
   });
 
-  try {
-    importTransaction(channels);
-  } catch (error) {
-    console.error('Channels import transaction failed:', error);
-    throw error;
+    try {
+      importTransaction(batch);
+    } catch (error) {
+      console.error('Channels import batch failed:', error);
+      throw error;
+    }
+
+    // Progress logging
+    if ((i + BATCH_SIZE) % PROGRESS_INTERVAL === 0 || i + BATCH_SIZE >= channels.length) {
+      const processed = Math.min(i + BATCH_SIZE, channels.length);
+      const percentage = ((processed / channels.length) * 100).toFixed(1);
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`[ImportService] Progress: ${processed}/${channels.length} (${percentage}%) - ${elapsed}s elapsed`);
+    }
+
+    // Yield to event loop between batches
+    if (i + BATCH_SIZE < channels.length) {
+      await new Promise(resolve => setImmediate(resolve));
+    }
   }
+
+  const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`[ImportService] Import completed in ${totalTime}s`);
 
   return {
     success: true,

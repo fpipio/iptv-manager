@@ -183,6 +183,7 @@ async function syncMoviesFromM3u(parsedMovies) {
   }
 
   console.log(`[MovieService] Syncing ${parsedMovies.length} movies to database (DB only)`);
+  const startTime = Date.now();
 
   // Get all existing movies from DB
   const existingMovies = db.prepare('SELECT * FROM movies').all();
@@ -193,40 +194,65 @@ async function syncMoviesFromM3u(parsedMovies) {
   // Track which movies are in the current feed
   const feedMovieNames = new Set(parsedMovies.map(m => m.tvg_name));
 
-  // Process movies from feed
-  for (const movie of parsedMovies) {
-    try {
-      const existing = existingMoviesMap.get(movie.tvg_name);
+  // Process movies in batches to avoid blocking event loop
+  const BATCH_SIZE = 500;
+  const PROGRESS_INTERVAL = 1000;
 
-      if (existing) {
-        // Movie exists - update metadata and last_seen_at (DB only)
-        db.prepare(
-          `UPDATE movies
-           SET tvg_logo = ?,
-               group_title = ?,
-               url = ?,
-               last_seen_at = CURRENT_TIMESTAMP,
-               updated_at = CURRENT_TIMESTAMP
-           WHERE id = ?`
-        ).run(movie.tvg_logo || null, movie.group_title || 'Uncategorized', movie.url, existing.id);
-        stats.updated++;
-      } else {
-        // New movie - create DB record only (no filesystem)
-        const id = uuidv4();
+  for (let i = 0; i < parsedMovies.length; i += BATCH_SIZE) {
+    const batch = parsedMovies.slice(i, Math.min(i + BATCH_SIZE, parsedMovies.length));
 
-        const result = db.prepare(
-          `INSERT OR IGNORE INTO movies (id, tvg_name, tvg_logo, group_title, url, folder_path, strm_file_path, last_seen_at, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-        ).run(id, movie.tvg_name, movie.tvg_logo || null, movie.group_title || 'Uncategorized', movie.url);
+    // Process batch in a transaction for performance
+    const processBatch = db.transaction((movies) => {
+      for (const movie of movies) {
+        try {
+          const existing = existingMoviesMap.get(movie.tvg_name);
 
-        // Only increment if actually inserted (changes > 0)
-        if (result.changes > 0) {
-          stats.created++;
+          if (existing) {
+            // Movie exists - update metadata and last_seen_at (DB only)
+            db.prepare(
+              `UPDATE movies
+               SET tvg_logo = ?,
+                   group_title = ?,
+                   url = ?,
+                   last_seen_at = CURRENT_TIMESTAMP,
+                   updated_at = CURRENT_TIMESTAMP
+               WHERE id = ?`
+            ).run(movie.tvg_logo || null, movie.group_title || 'Uncategorized', movie.url, existing.id);
+            stats.updated++;
+          } else {
+            // New movie - create DB record only (no filesystem)
+            const id = uuidv4();
+
+            const result = db.prepare(
+              `INSERT OR IGNORE INTO movies (id, tvg_name, tvg_logo, group_title, url, folder_path, strm_file_path, last_seen_at, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+            ).run(id, movie.tvg_name, movie.tvg_logo || null, movie.group_title || 'Uncategorized', movie.url);
+
+            // Only increment if actually inserted (changes > 0)
+            if (result.changes > 0) {
+              stats.created++;
+            }
+          }
+        } catch (error) {
+          console.error(`[MovieService] Error processing movie "${movie.tvg_name}":`, error);
+          stats.errors++;
         }
       }
-    } catch (error) {
-      console.error(`[MovieService] Error processing movie "${movie.tvg_name}":`, error);
-      stats.errors++;
+    });
+
+    processBatch(batch);
+
+    // Progress logging every 1000 movies
+    if ((i + BATCH_SIZE) % PROGRESS_INTERVAL === 0 || i + BATCH_SIZE >= parsedMovies.length) {
+      const processed = Math.min(i + BATCH_SIZE, parsedMovies.length);
+      const percentage = ((processed / parsedMovies.length) * 100).toFixed(1);
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`[MovieService] Progress: ${processed}/${parsedMovies.length} (${percentage}%) - ${elapsed}s elapsed`);
+    }
+
+    // Yield to event loop between batches (non-blocking)
+    if (i + BATCH_SIZE < parsedMovies.length) {
+      await new Promise(resolve => setImmediate(resolve));
     }
   }
 
@@ -262,7 +288,8 @@ async function syncMoviesFromM3u(parsedMovies) {
     }
   }
 
-  console.log('[MovieService] Database sync completed:', stats);
+  const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`[MovieService] Database sync completed in ${totalTime}s:`, stats);
   return stats;
 }
 
