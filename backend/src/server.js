@@ -33,8 +33,9 @@ const outputPath = process.env.OUTPUT_PATH || path.join(__dirname, '../data/outp
 app.use('/output', express.static(outputPath));
 
 // Serve EPG files (BEFORE frontend fallback)
+// Using /epg-files instead of /epg to avoid conflicts with Vue Router /epg/* routes
 const epgPath = process.env.EPG_PATH || path.join(__dirname, '../data/epg');
-app.use('/epg', express.static(epgPath));
+app.use('/epg-files', express.static(epgPath));
 
 // Serve frontend static files (in production)
 if (process.env.NODE_ENV === 'production') {
@@ -47,9 +48,9 @@ if (process.env.NODE_ENV === 'production') {
   app.use('/vite.svg', express.static(path.join(publicPath, 'vite.svg')));
 
   // Fallback for Vue Router (SPA) - MUST BE LAST!
-  // Exclude /output and /epg paths from SPA fallback
+  // Exclude /output and /epg-files paths from SPA fallback
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/output/') || req.path.startsWith('/epg/')) {
+    if (req.path.startsWith('/output/') || req.path.startsWith('/epg-files/')) {
       return next(); // Let other handlers deal with it
     }
     res.sendFile(path.join(publicPath, 'index.html'));
@@ -62,5 +63,5 @@ app.listen(PORT, () => {
   console.log(`   - Frontend: http://localhost:${PORT}`);
   console.log(`   - API: http://localhost:${PORT}/api`);
   console.log(`   - M3U Playlist: http://localhost:${PORT}/output/playlist.m3u`);
-  console.log(`   - EPG Guide: http://localhost:${PORT}/epg/guide.xml\n`);
+  console.log(`   - EPG Guide: http://localhost:${PORT}/epg-files/guide.xml\n`);
 });

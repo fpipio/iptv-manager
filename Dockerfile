@@ -16,6 +16,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Install sqlite3 for database debugging
+RUN apk add --no-cache sqlite
+
 # Copy backend package files
 COPY backend/package*.json ./
 RUN npm install --omit=dev
@@ -26,8 +29,18 @@ COPY backend/ ./
 # Copy frontend build to public directory
 COPY --from=frontend-builder /app/frontend/dist ./public
 
+# Copy EPG grabber (critical for EPG functionality)
+COPY epg-grabber/ ./epg-grabber/
+
+# Install EPG grabber dependencies
+WORKDIR /app/epg-grabber
+RUN npm install --omit=dev
+
+# Back to app root
+WORKDIR /app
+
 # Create data directory
-RUN mkdir -p /app/data/output
+RUN mkdir -p /app/data/output /app/data/epg
 
 # Expose port
 EXPOSE 3000

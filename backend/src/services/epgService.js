@@ -220,6 +220,17 @@ class EpgService {
       if (stdout) console.log(`[EPG] stdout:`, stdout.substring(0, 500));
       if (stderr) console.error(`[EPG] stderr:`, stderr.substring(0, 500));
 
+      // VERIFY FILE WAS CREATED
+      console.log(`[EPG] Verifying output file exists: ${outputPath}`);
+      try {
+        const stats = await fs.stat(outputPath);
+        console.log(`[EPG] ✅ File created successfully! Size: ${stats.size} bytes`);
+      } catch (error) {
+        console.error(`[EPG] ❌ ERROR: Output file NOT found at ${outputPath}`);
+        console.error(`[EPG] File check error:`, error.message);
+        throw new Error(`EPG grab completed but output file was not created at ${outputPath}`);
+      }
+
       // Parse programs count from output
       let programsCount = 0;
       const programsMatch = stdout.match(/\((\d+) programs\)/g);
@@ -471,6 +482,17 @@ class EpgService {
       console.log(`[EPG] Grab completed`);
       if (stdout) console.log(`[EPG] stdout:`, stdout.substring(0, 500));
       if (stderr) console.error(`[EPG] stderr:`, stderr.substring(0, 500));
+
+      // VERIFY FILE WAS CREATED
+      console.log(`[EPG] Verifying output file exists: ${outputPath}`);
+      try {
+        const stats = await fs.stat(outputPath);
+        console.log(`[EPG] ✅ File created successfully! Size: ${stats.size} bytes`);
+      } catch (error) {
+        console.error(`[EPG] ❌ ERROR: Output file NOT found at ${outputPath}`);
+        console.error(`[EPG] File check error:`, error.message);
+        throw new Error(`EPG grab completed but output file was not created at ${outputPath}`);
+      }
 
       // Parse programs count from output
       let programsCount = 0;

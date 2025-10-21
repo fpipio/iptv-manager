@@ -10,9 +10,10 @@ Web application for managing and organizing IPTV M3U playlists with channel grou
 - **Manage channel groups** with drag-and-drop reordering
 - **Edit channel metadata** (name, logo, group assignment)
 - **Maintain history** - custom changes persist across imports
+- **Movies management** with automatic .strm file generation
+- **EPG Multi-Source Matching** - intelligent channel → EPG mapping
 - **Export customized playlists** as M3U files
-- **HTTP server** for serving generated playlists
-- **EPG (Electronic Program Guide)** integration with configurable sources (beta)
+- **HTTP server** for serving generated playlists and EPG data
 
 ## Architecture
 
@@ -131,9 +132,36 @@ iptv-manager/
 
 1. **Import**: Upload your M3U playlist or provide a URL
 2. **Manage**: Organize channels into groups, rename them, reorder
-3. **EPG** (optional): Configure EPG sources and grab program data
-4. **Export**: Generate your customized M3U file
-5. **Access**: Use the HTTP URL in your IPTV player
+3. **Movies**: Manage films with automatic .strm file generation for media servers
+4. **EPG Matching**: Map channels to EPG sources for program guide
+5. **Export**: Generate your customized M3U file
+6. **Access**: Use the HTTP URLs in your IPTV player or media server
+
+## Documentation
+
+- **[ROADMAP.md](ROADMAP.md)** - Project roadmap, features, and development status
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide for rapid deployment
+- **[EPG_MATCHING_GUIDE.md](EPG_MATCHING_GUIDE.md)** - EPG matching system user guide
+
+## ⚠️ Important Notes
+
+### Database Persistence
+
+The database **persists between container restarts** by design. Running `docker-compose down && docker-compose up` will **NOT** reset your data.
+
+**To reset data, use the UI buttons**:
+1. Go to http://localhost:3000
+2. Click "Import" in the menu
+3. Scroll to "Danger Zone"
+4. Choose the appropriate reset button:
+   - **Reset Channels Only** - Delete only channels
+   - **Reset Groups Only** - Delete only groups
+   - **Reset EPG Mappings Only** - Delete only EPG mappings
+   - **Reset Movies Only** - Delete only movies and STRM files
+   - **Reset Everything** - Delete ALL data
+
+See [ROADMAP.md](ROADMAP.md) Known Issues #4 for more details.
 
 ## Future Features
 

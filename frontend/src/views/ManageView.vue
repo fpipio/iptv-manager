@@ -148,8 +148,12 @@
                   <p class="font-medium text-gray-900">
                     {{ channel.is_name_overridden ? channel.custom_tvg_name : channel.imported_tvg_name }}
                     <span v-if="channel.is_name_overridden || channel.is_logo_overridden || channel.is_group_overridden" class="text-xs text-blue-600 ml-1">★</span>
+                    <span v-if="channel.original_tvg_id" class="text-xs text-orange-600 ml-1" :title="'Original tvg-id: ' + channel.original_tvg_id">↻</span>
                   </p>
-                  <p class="text-sm text-gray-500">ID: {{ channel.tvg_id }}</p>
+                  <p class="text-sm text-gray-500">
+                    ID: {{ channel.tvg_id }}
+                    <span v-if="channel.original_tvg_id" class="text-xs text-orange-500 ml-1">(renamed from: {{ channel.original_tvg_id }})</span>
+                  </p>
                 </div>
               </div>
               <button
@@ -340,7 +344,7 @@
 
 <script setup>
 // v0.3.0 - Fixed group creation with is_special column
-import { ref, onMounted, nextTick, reactive } from 'vue'
+import { ref, onMounted, onActivated, nextTick, reactive } from 'vue'
 import axios from 'axios'
 import draggable from 'vuedraggable'
 import ChannelEditModal from '../components/ChannelEditModal.vue'
@@ -710,6 +714,12 @@ const executeBulkMove = async () => {
 }
 
 onMounted(() => {
+  loadData()
+})
+
+// Reload data when component is re-activated from keep-alive cache
+// This ensures fresh data after navigating from Import page
+onActivated(() => {
   loadData()
 })
 </script>

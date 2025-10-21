@@ -22,7 +22,7 @@ async function generateM3UContent() {
     await fs.access(epgPath);
     // EPG file exists, add x-tvg-url attribute
     const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-    content += ` x-tvg-url="${baseUrl}/epg/guide.xml"`;
+    content += ` x-tvg-url="${baseUrl}/epg-files/guide.xml"`;
   } catch (error) {
     // EPG file doesn't exist, skip x-tvg-url attribute
   }

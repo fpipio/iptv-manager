@@ -452,6 +452,11 @@ export default {
   mounted() {
     this.loadData();
   },
+  // Reload data when component is re-activated from keep-alive cache
+  // This ensures fresh data after navigating from other pages
+  activated() {
+    this.loadData();
+  },
   methods: {
     async loadData() {
       this.loading = true;
@@ -469,7 +474,7 @@ export default {
     },
     async loadStats() {
       try {
-        const res = await axios.get('http://localhost:3000/api/epg/matching/stats');
+        const res = await axios.get('/api/epg/matching/stats');
         this.stats = res.data;
       } catch (error) {
         console.error('Error loading stats:', error);
@@ -477,7 +482,7 @@ export default {
     },
     async loadMappings() {
       try {
-        const res = await axios.get('http://localhost:3000/api/epg/matching/all');
+        const res = await axios.get('/api/epg/matching/all');
         this.mappings = res.data;
       } catch (error) {
         console.error('Error loading mappings:', error);
@@ -486,7 +491,7 @@ export default {
     },
     async loadEpgChannelsStats() {
       try {
-        const res = await axios.get('http://localhost:3000/api/epg/channels/stats');
+        const res = await axios.get('/api/epg/channels/stats');
         this.epgChannelsStats = res.data;
       } catch (error) {
         console.error('Error loading EPG channels stats:', error);
@@ -514,7 +519,7 @@ export default {
       }, 300000); // 5 minutes
 
       try {
-        const res = await axios.post('http://localhost:3000/api/epg/channels/sync');
+        const res = await axios.post('/api/epg/channels/sync');
         this.toast.success(`Synced successfully! Sources: ${res.data.totalSources}, Channels: ${res.data.totalChannels}`, 4000);
         await this.loadEpgChannelsStats();
       } catch (error) {
@@ -547,7 +552,7 @@ export default {
       }, 300000); // 5 minutes
 
       try {
-        const res = await axios.post('http://localhost:3000/api/epg/matching/auto', {
+        const res = await axios.post('/api/epg/matching/auto', {
           useFuzzyMatching: false,
           overwriteManual: false
         });
@@ -585,7 +590,7 @@ export default {
       }, 600000); // 10 minutes
 
       try {
-        const res = await axios.post('http://localhost:3000/api/epg/grab-custom', {
+        const res = await axios.post('/api/epg/grab-custom', {
           days: 1,
           maxConnections: 1,
           timeout: 60000
@@ -607,17 +612,17 @@ export default {
 
       try {
         // Load alternatives based on tvg_id
-        const res = await axios.get(`http://localhost:3000/api/epg/matching/alternatives/${mapping.imported_tvg_id}`);
+        const res = await axios.get(`/api/epg/matching/alternatives/${mapping.imported_tvg_id}`);
         this.alternatives = res.data;
 
         // Load all EPG channels for search functionality
-        const sourcesRes = await axios.get('http://localhost:3000/api/epg/sources');
+        const sourcesRes = await axios.get('/api/epg/sources');
         const enabledSources = sourcesRes.data.filter(s => s.enabled);
 
         this.allAlternativesForSearch = [];
         for (const source of enabledSources) {
           try {
-            const channelsRes = await axios.get(`http://localhost:3000/api/epg/channels/source/${source.id}`);
+            const channelsRes = await axios.get(`/api/epg/channels/source/${source.id}`);
             this.allAlternativesForSearch.push(...channelsRes.data.map(ch => ({
               ...ch,
               source_name: source.site_name,
@@ -635,7 +640,7 @@ export default {
     },
     async selectAlternative(alternative) {
       try {
-        await axios.post('http://localhost:3000/api/epg/matching/manual', {
+        await axios.post('/api/epg/matching/manual', {
           channelId: this.selectedChannel.channel_id,
           epgSourceChannelId: alternative.id,
           priority: alternative.source_priority
@@ -661,7 +666,7 @@ export default {
       if (!confirmed) return;
 
       try {
-        await axios.delete(`http://localhost:3000/api/epg/matching/channel/${channelId}`);
+        await axios.delete(`/api/epg/matching/channel/${channelId}`);
         this.toast.success('Mapping removed successfully', 3000);
         await this.loadData();
       } catch (error) {
@@ -684,7 +689,7 @@ export default {
       if (!confirmed) return;
 
       try {
-        await axios.delete(`http://localhost:3000/api/epg/matching/channel/${this.selectedChannel.channel_id}`);
+        await axios.delete(`/api/epg/matching/channel/${this.selectedChannel.channel_id}`);
         this.toast.success('Manual mapping removed successfully!', 3000);
         this.closeAlternativesModal();
         await this.loadData();
@@ -714,7 +719,7 @@ export default {
 
       try {
         // Get all EPG sources
-        const sourcesRes = await axios.get('http://localhost:3000/api/epg/sources');
+        const sourcesRes = await axios.get('/api/epg/sources');
         const enabledSources = sourcesRes.data.filter(s => s.enabled);
 
         const allChannels = [];
@@ -722,7 +727,7 @@ export default {
         // Get channels from all enabled sources
         for (const source of enabledSources) {
           try {
-            const channelsRes = await axios.get(`http://localhost:3000/api/epg/channels/source/${source.id}`);
+            const channelsRes = await axios.get(`/api/epg/channels/source/${source.id}`);
             allChannels.push(...channelsRes.data.map(ch => ({
               ...ch,
               source_name: source.site_name,
@@ -750,7 +755,7 @@ export default {
     },
     async selectManualMapping(epgChannel) {
       try {
-        await axios.post('http://localhost:3000/api/epg/matching/manual', {
+        await axios.post('/api/epg/matching/manual', {
           channelId: this.selectedChannel.channel_id,
           epgSourceChannelId: epgChannel.id,
           priority: epgChannel.source_priority || 999

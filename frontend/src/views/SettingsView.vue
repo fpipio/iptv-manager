@@ -64,14 +64,14 @@
                   M3U Playlist
                 </h3>
                 <code class="text-sm text-gray-700 bg-white px-3 py-2 rounded border block break-all">
-                  http://localhost:3000/output/playlist.m3u
+                  /output/playlist.m3u
                 </code>
                 <p class="text-xs text-gray-500 mt-2">
                   Your exported M3U playlist with all enabled channels
                 </p>
               </div>
               <button
-                @click="copyToClipboard('http://localhost:3000/output/playlist.m3u')"
+                @click="copyToClipboard('/output/playlist.m3u')"
                 class="ml-4 px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 flex-shrink-0"
                 title="Copy to clipboard"
               >
@@ -91,14 +91,14 @@
                   EPG Guide (XMLTV)
                 </h3>
                 <code class="text-sm text-gray-700 bg-white px-3 py-2 rounded border block break-all">
-                  http://localhost:3000/api/epg/xml
+                  /api/epg/xml
                 </code>
                 <p class="text-xs text-gray-500 mt-2">
                   Electronic Program Guide in XMLTV format (generated from EPG Matching)
                 </p>
               </div>
               <button
-                @click="copyToClipboard('http://localhost:3000/api/epg/xml')"
+                @click="copyToClipboard('/api/epg/xml')"
                 class="ml-4 px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 flex-shrink-0"
                 title="Copy to clipboard"
               >
@@ -373,9 +373,9 @@ export default {
     async loadData() {
       try {
         const [sourcesRes, configRes, statusRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/epg/sources'),
-          axios.get('http://localhost:3000/api/epg/config'),
-          axios.get('http://localhost:3000/api/epg/status')
+          axios.get('/api/epg/sources'),
+          axios.get('/api/epg/config'),
+          axios.get('/api/epg/status')
         ]);
 
         // Sort sources by priority (1 = highest = first)
@@ -395,7 +395,7 @@ export default {
         }));
 
         for (const update of updates) {
-          await axios.put(`http://localhost:3000/api/epg/sources/${update.id}`, {
+          await axios.put(`/api/epg/sources/${update.id}`, {
             priority: update.priority
           });
         }
@@ -409,7 +409,7 @@ export default {
     },
     async saveConfig() {
       try {
-        await axios.put('http://localhost:3000/api/epg/config', {
+        await axios.put('/api/epg/config', {
           grab_days: String(this.config.grab_days),
           max_connections: String(this.config.max_connections)
         });
@@ -421,7 +421,7 @@ export default {
     },
     async toggleSourceEnabled(source) {
       try {
-        await axios.put(`http://localhost:3000/api/epg/sources/${source.id}`, {
+        await axios.put(`/api/epg/sources/${source.id}`, {
           enabled: !source.enabled
         });
         this.addToast(`Source ${source.enabled ? 'disabled' : 'enabled'}`, 'success');
@@ -447,10 +447,10 @@ export default {
 
       try {
         if (this.editingSource) {
-          await axios.put(`http://localhost:3000/api/epg/sources/${this.editingSource.id}`, this.sourceForm);
+          await axios.put(`/api/epg/sources/${this.editingSource.id}`, this.sourceForm);
           this.addToast('Source updated successfully', 'success');
         } else {
-          await axios.post('http://localhost:3000/api/epg/sources', this.sourceForm);
+          await axios.post('/api/epg/sources', this.sourceForm);
           this.addToast('Source added successfully', 'success');
         }
         this.closeSourceModal();
@@ -464,7 +464,7 @@ export default {
       if (!confirm(`Delete EPG source "${source.site_name}"?`)) return;
 
       try {
-        await axios.delete(`http://localhost:3000/api/epg/sources/${source.id}`);
+        await axios.delete(`/api/epg/sources/${source.id}`);
         this.addToast('Source deleted successfully', 'success');
         this.loadData();
       } catch (error) {

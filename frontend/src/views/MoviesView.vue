@@ -82,10 +82,102 @@
             type="text"
             class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono text-sm"
             placeholder="/app/data/movies"
+            @blur="saveOutputDirectory"
           />
+          <button
+            @click="saveOutputDirectory"
+            :disabled="isSavingConfig"
+            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <svg v-if="isSavingConfig" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>{{ isSavingConfig ? 'Saving...' : 'Save' }}</span>
+          </button>
         </div>
         <p class="mt-2 text-xs text-gray-500">
           Files will be created as: {output_dir}/{movie_name}/{movie_name}.strm
+        </p>
+      </div>
+
+      <!-- Emby Configuration -->
+      <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+          Emby Integration (Optional)
+        </h3>
+
+        <div class="space-y-3">
+          <!-- Emby Server URL -->
+          <div class="flex items-center gap-3">
+            <label class="text-xs font-medium text-gray-600 w-28">Server URL:</label>
+            <input
+              v-model="embyConfig.serverUrl"
+              type="text"
+              class="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm font-mono"
+              placeholder="http://192.168.88.11:8097"
+            />
+          </div>
+
+          <!-- Emby API Token -->
+          <div class="flex items-center gap-3">
+            <label class="text-xs font-medium text-gray-600 w-28">API Token:</label>
+            <input
+              v-model="embyConfig.apiToken"
+              type="password"
+              class="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm font-mono"
+              placeholder="Your Emby API Token"
+            />
+          </div>
+
+          <!-- Emby Library ID -->
+          <div class="flex items-center gap-3">
+            <label class="text-xs font-medium text-gray-600 w-28">Library ID:</label>
+            <input
+              v-model="embyConfig.libraryId"
+              type="text"
+              class="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm font-mono"
+              placeholder="659436"
+            />
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-3 pt-2">
+            <button
+              @click="saveEmbyConfig"
+              :disabled="isSavingEmby"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 text-sm flex items-center gap-2"
+            >
+              <svg v-if="isSavingEmby" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Save Config
+            </button>
+
+            <button
+              @click="refreshEmbyLibrary"
+              :disabled="isRefreshingEmby || !isEmbyConfigured"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm flex items-center gap-2"
+              :title="!isEmbyConfigured ? 'Configure Emby first' : 'Refresh Emby Library'"
+            >
+              <svg v-if="isRefreshingEmby" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              Refresh Library
+            </button>
+          </div>
+        </div>
+
+        <p class="mt-2 text-xs text-gray-500">
+          Configure Emby to automatically refresh the library after STRM files are created/deleted.
         </p>
       </div>
 
@@ -356,6 +448,9 @@ export default {
       },
       loading: false,
       isRescanning: false,
+      isSavingConfig: false,
+      isSavingEmby: false,
+      isRefreshingEmby: false,
       searchQuery: '',
       filteredMovies: [],
       showUrlModal: false,
@@ -363,7 +458,12 @@ export default {
       searchTimeout: null,
       currentPage: 1,
       itemsPerPage: 100,
-      outputDirectory: '/app/data/movies',
+      outputDirectory: '',  // Will be loaded from server
+      embyConfig: {
+        serverUrl: '',
+        apiToken: '',
+        libraryId: ''
+      },
       totalMovies: 0,
       expandedGroups: new Set(), // Track which groups are expanded
       loadingProgress: 0, // Progress percentage (0-100)
@@ -392,9 +492,18 @@ export default {
       });
 
       return sortedGrouped;
+    },
+
+    isEmbyConfigured() {
+      return this.embyConfig.serverUrl &&
+             this.embyConfig.apiToken &&
+             this.embyConfig.libraryId;
     }
   },
-  mounted() {
+  async mounted() {
+    // Load config FIRST (before movies data)
+    await this.loadConfig();
+    // Then load movies
     this.loadData();
   },
   beforeUnmount() {
@@ -462,9 +571,48 @@ export default {
       }
     },
 
+    async loadConfig() {
+      // Load configuration FIRST (called from mounted)
+      console.log('[MoviesView] Loading configuration from server...');
+
+      try {
+        // Load movies directory configuration
+        const configRes = await axios.get('/api/movies/config');
+        console.log('[MoviesView] GET /api/movies/config response:', configRes.data);
+
+        if (configRes.data.success && configRes.data.data && configRes.data.data.movies_directory) {
+          this.outputDirectory = configRes.data.data.movies_directory;
+          console.log('[MoviesView] ✓ Loaded movies_directory:', this.outputDirectory);
+        } else {
+          console.warn('[MoviesView] ⚠ movies_directory not found in response, using default');
+          this.outputDirectory = '/app/data/movies';  // Fallback default
+        }
+      } catch (error) {
+        console.error('[MoviesView] ✗ Error loading movies config:', error);
+        this.outputDirectory = '/app/data/movies';  // Fallback default
+      }
+
+      try {
+        // Load Emby configuration
+        const embyRes = await axios.get('/api/movies/emby-config');
+        if (embyRes.data.data) {
+          this.embyConfig = {
+            serverUrl: embyRes.data.data.emby_server_url || '',
+            apiToken: embyRes.data.data.emby_api_token || '',
+            libraryId: embyRes.data.data.emby_library_id || ''
+          };
+          console.log('[MoviesView] ✓ Loaded Emby config');
+        }
+      } catch (error) {
+        console.error('[MoviesView] ⚠ Error loading Emby config:', error);
+        // Not critical, just log
+      }
+    },
+
     async loadStats() {
       this.loadingStats = true;
       try {
+        // Load stats only (config already loaded in mounted)
         const statsRes = await axios.get('/api/movies/stats');
         this.stats = statsRes.data.data || {
           total: 0,
@@ -472,7 +620,7 @@ export default {
           movies_directory: ''
         };
       } catch (error) {
-        console.error('Error loading stats:', error);
+        console.error('[MoviesView] Error loading stats:', error);
       } finally {
         this.loadingStats = false;
       }
@@ -687,6 +835,93 @@ export default {
       } catch (error) {
         console.error('Error cancelling job:', error);
         this.showToast('Failed to cancel job', 'error');
+      }
+    },
+
+    async saveOutputDirectory() {
+      if (!this.outputDirectory || !this.outputDirectory.trim()) {
+        this.showToast('Output directory cannot be empty', 'error');
+        return;
+      }
+
+      this.isSavingConfig = true;
+      try {
+        console.log('[MoviesView] Saving movies_directory:', this.outputDirectory);
+
+        const response = await axios.put('/api/movies/config', {
+          movies_directory: this.outputDirectory
+        });
+
+        console.log('[MoviesView] PUT /api/movies/config response:', response.data);
+
+        if (response.data.success) {
+          this.showToast('Output directory saved successfully', 'success');
+
+          // Update stats card to show new value
+          this.stats.movies_directory = this.outputDirectory;
+
+          // Reload stats (counts only)
+          await this.loadStats();
+        } else {
+          throw new Error(response.data.message || 'Save failed');
+        }
+      } catch (error) {
+        console.error('[MoviesView] Error saving config:', error);
+        this.showToast(
+          error.response?.data?.message || 'Failed to save output directory',
+          'error'
+        );
+      } finally {
+        this.isSavingConfig = false;
+      }
+    },
+
+    async saveEmbyConfig() {
+      if (!this.embyConfig.serverUrl || !this.embyConfig.apiToken || !this.embyConfig.libraryId) {
+        this.showToast('Please fill all Emby fields', 'error');
+        return;
+      }
+
+      this.isSavingEmby = true;
+      try {
+        await axios.put('/api/movies/emby-config', {
+          emby_server_url: this.embyConfig.serverUrl,
+          emby_api_token: this.embyConfig.apiToken,
+          emby_library_id: this.embyConfig.libraryId
+        });
+        this.showToast('Emby configuration saved successfully', 'success');
+      } catch (error) {
+        console.error('Error saving Emby config:', error);
+        this.showToast(
+          error.response?.data?.message || 'Failed to save Emby configuration',
+          'error'
+        );
+      } finally {
+        this.isSavingEmby = false;
+      }
+    },
+
+    async refreshEmbyLibrary() {
+      if (!this.isEmbyConfigured) {
+        this.showToast('Please configure Emby first', 'error');
+        return;
+      }
+
+      this.isRefreshingEmby = true;
+      try {
+        const response = await axios.post('/api/movies/emby-refresh');
+        this.showToast(
+          response.data.message || 'Emby library refresh triggered successfully',
+          'success'
+        );
+      } catch (error) {
+        console.error('Error refreshing Emby library:', error);
+        this.showToast(
+          error.response?.data?.message || 'Failed to refresh Emby library',
+          'error'
+        );
+      } finally {
+        this.isRefreshingEmby = false;
       }
     },
 

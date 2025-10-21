@@ -29,10 +29,18 @@ module.exports.sanitizeFilename = sanitizeFilename;
  * @returns {string} Movies directory path
  */
 function getMoviesDirectory() {
-  const result = db.prepare(
-    `SELECT value FROM epg_config WHERE key = 'movies_directory'`
-  ).get();
-  return result?.value || '/app/data/movies';
+  try {
+    const result = db.prepare(
+      `SELECT value FROM epg_config WHERE key = 'movies_directory'`
+    ).get();
+
+    const value = result?.value || '/app/data/movies';
+    console.log(`[MovieService] getMoviesDirectory() returned: "${value}"`);
+    return value;
+  } catch (error) {
+    console.error('[MovieService] Error reading movies_directory from DB:', error);
+    return '/app/data/movies';
+  }
 }
 
 /**
@@ -41,10 +49,37 @@ function getMoviesDirectory() {
  * @returns {void}
  */
 function setMoviesDirectory(dirPath) {
-  db.prepare(
-    `INSERT OR REPLACE INTO epg_config (key, value, updated_at)
-     VALUES (?, ?, datetime('now'))`
-  ).run('movies_directory', dirPath);
+  try {
+    // Normalize path: remove trailing slashes (both / and \)
+    const normalizedPath = dirPath.replace(/[/\\]+$/, '');
+
+    console.log(`[MovieService] setMoviesDirectory() saving: "${normalizedPath}"`);
+
+    const result = db.prepare(
+      `INSERT OR REPLACE INTO epg_config (key, value, updated_at)
+       VALUES (?, ?, datetime('now'))`
+    ).run('movies_directory', normalizedPath);
+
+    console.log(`[MovieService] Database write result:`, {
+      changes: result.changes,
+      lastInsertRowid: result.lastInsertRowid
+    });
+
+    // Verify write by reading back
+    const verification = db.prepare(
+      `SELECT value FROM epg_config WHERE key = 'movies_directory'`
+    ).get();
+
+    if (verification?.value === normalizedPath) {
+      console.log(`[MovieService] ✓ Write verified successfully: "${verification.value}"`);
+    } else {
+      console.error(`[MovieService] ✗ Write verification FAILED! Expected "${normalizedPath}", got "${verification?.value}"`);
+      throw new Error('Database write verification failed');
+    }
+  } catch (error) {
+    console.error('[MovieService] Error setting movies_directory:', error);
+    throw error;
+  }
 }
 
 

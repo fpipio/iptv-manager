@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const db = require('../db/database');
 const movieService = require('../services/movieService');
 
 /**
@@ -124,65 +125,6 @@ router.put('/config', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update configuration',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/movies/:id
- * Get single movie by ID
- */
-router.get('/:id', async (req, res) => {
-  try {
-    const movie = await movieService.getMovieById(req.params.id);
-
-    if (!movie) {
-      return res.status(404).json({
-        success: false,
-        message: 'Movie not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: movie
-    });
-  } catch (error) {
-    console.error('Error fetching movie:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch movie',
-      error: error.message
-    });
-  }
-});
-
-/**
- * DELETE /api/movies/:id
- * Delete movie and its STRM file
- */
-router.delete('/:id', async (req, res) => {
-  try {
-    await movieService.deleteMovie(req.params.id);
-
-    res.json({
-      success: true,
-      message: 'Movie deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting movie:', error);
-
-    if (error.message === 'Movie not found') {
-      return res.status(404).json({
-        success: false,
-        message: error.message
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete movie',
       error: error.message
     });
   }
@@ -483,6 +425,134 @@ router.delete('/jobs/:jobId', (req, res) => {
 });
 
 /**
+ * GET /api/movies/emby-config
+ * Get Emby configuration
+ */
+router.get('/emby-config', async (req, res) => {
+  try {
+    const db = require('../db/database');
+    const config = {};
+
+    const serverUrl = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_server_url'`).get();
+    const apiToken = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_api_token'`).get();
+    const libraryId = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_library_id'`).get();
+
+    config.emby_server_url = serverUrl?.value || '';
+    config.emby_api_token = apiToken?.value || '';
+    config.emby_library_id = libraryId?.value || '';
+
+    res.json({
+      success: true,
+      data: config
+    });
+  } catch (error) {
+    console.error('Error fetching Emby config:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch Emby configuration',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/movies/emby-config
+ * Update Emby configuration
+ */
+router.put('/emby-config', async (req, res) => {
+  try {
+    const { emby_server_url, emby_api_token, emby_library_id } = req.body;
+
+    if (!emby_server_url || !emby_api_token || !emby_library_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'emby_server_url, emby_api_token, and emby_library_id are required'
+      });
+    }
+
+    const db = require('../db/database');
+    const stmt = db.prepare(
+      `INSERT OR REPLACE INTO epg_config (key, value, updated_at)
+       VALUES (?, ?, datetime('now'))`
+    );
+
+    stmt.run('emby_server_url', emby_server_url);
+    stmt.run('emby_api_token', emby_api_token);
+    stmt.run('emby_library_id', emby_library_id);
+
+    res.json({
+      success: true,
+      message: 'Emby configuration updated successfully',
+      data: {
+        emby_server_url,
+        emby_api_token,
+        emby_library_id
+      }
+    });
+  } catch (error) {
+    console.error('Error updating Emby config:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update Emby configuration',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/movies/emby-refresh
+ * Trigger Emby library refresh
+ */
+router.post('/emby-refresh', async (req, res) => {
+  try {
+    const db = require('../db/database');
+
+    // Get Emby configuration
+    const serverUrl = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_server_url'`).get();
+    const apiToken = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_api_token'`).get();
+    const libraryId = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_library_id'`).get();
+
+    if (!serverUrl?.value || !apiToken?.value || !libraryId?.value) {
+      return res.status(400).json({
+        success: false,
+        message: 'Emby is not configured. Please set up Emby configuration first.'
+      });
+    }
+
+    // Call Emby API to refresh library
+    // Note: fetch is natively available in Node.js 18+
+    const embyUrl = `${serverUrl.value}/emby/Library/Refresh?ItemId=${libraryId.value}`;
+
+    console.log(`[Emby] Triggering library refresh: ${embyUrl}`);
+
+    const response = await fetch(embyUrl, {
+      method: 'POST',
+      headers: {
+        'X-Emby-Token': apiToken.value
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Emby API returned ${response.status}: ${response.statusText}`);
+    }
+
+    console.log(`[Emby] Library refresh triggered successfully`);
+
+    res.json({
+      success: true,
+      message: `Emby library refresh triggered successfully (Library ID: ${libraryId.value})`
+    });
+  } catch (error) {
+    console.error('Error triggering Emby refresh:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to trigger Emby library refresh',
+      error: error.message
+    });
+  }
+});
+
+/**
  * POST /api/movies/generate-strm
  * Generate STRM files for selected group_titles (DEPRECATED - use toggle-strm-group)
  */
@@ -557,6 +627,121 @@ router.post('/generate-strm', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to generate STRM files',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/movies/reset/all
+ * Reset all movies and delete STRM files
+ */
+router.post('/reset/all', async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+
+    // 1. Get movies directory from config
+    const configRow = db.prepare('SELECT value FROM epg_config WHERE key = ?').get('movies_directory');
+    const moviesDir = configRow?.value || '/app/data/movies';
+
+    // 2. Delete all STRM files from filesystem
+    let strmFilesDeleted = 0;
+    try {
+      if (fs.existsSync(moviesDir)) {
+        const folders = fs.readdirSync(moviesDir);
+        for (const folder of folders) {
+          const folderPath = path.join(moviesDir, folder);
+          if (fs.statSync(folderPath).isDirectory()) {
+            // Delete entire movie folder (contains .strm file)
+            fs.rmSync(folderPath, { recursive: true, force: true });
+            strmFilesDeleted++;
+          }
+        }
+        console.log(`🗑️ [Reset Movies] Deleted ${strmFilesDeleted} movie folders with STRM files from ${moviesDir}`);
+      }
+    } catch (fsError) {
+      console.error('[Reset Movies] Error deleting STRM files:', fsError);
+      // Continue with database deletion even if filesystem fails
+    }
+
+    // 3. Delete all movies from database
+    const moviesResult = db.prepare('DELETE FROM movies').run();
+
+    res.json({
+      success: true,
+      deleted: {
+        movies: moviesResult.changes,
+        strmFiles: strmFilesDeleted
+      },
+      message: `Successfully deleted ${moviesResult.changes} movies and ${strmFilesDeleted} STRM folders.`
+    });
+  } catch (error) {
+    console.error('[Reset Movies] Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reset movies',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/movies/:id
+ * Get single movie by ID
+ * IMPORTANT: This route MUST be at the end, after all specific routes
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const movie = await movieService.getMovieById(req.params.id);
+
+    if (!movie) {
+      return res.status(404).json({
+        success: false,
+        message: 'Movie not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: movie
+    });
+  } catch (error) {
+    console.error('Error fetching movie:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch movie',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/movies/:id
+ * Delete movie and its STRM file
+ * IMPORTANT: This route MUST be at the end, after all specific routes
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    await movieService.deleteMovie(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Movie deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting movie:', error);
+
+    if (error.message === 'Movie not found') {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete movie',
       error: error.message
     });
   }

@@ -12,25 +12,25 @@ const upload = multer({
 
 // ========== CHANNELS IMPORT ==========
 
-// POST import channels from file upload
-router.post('/channels/upload', upload.single('file'), async (req, res) => {
+// POST analyze channels from file upload (pre-import analysis)
+router.post('/channels/analyze', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
     const content = req.file.buffer.toString('utf8');
-    const result = await importService.importChannelsOnly(content);
+    const result = await importService.analyzeM3uContent(content);
 
     res.json(result);
   } catch (error) {
-    console.error('Channels import error:', error);
+    console.error('Channels analysis error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// POST import channels from URL
-router.post('/channels/url', async (req, res) => {
+// POST analyze channels from URL (pre-import analysis)
+router.post('/channels/analyze-url', async (req, res) => {
   try {
     const { url } = req.body;
 
@@ -44,7 +44,48 @@ router.post('/channels/url', async (req, res) => {
       maxContentLength: 50 * 1024 * 1024 // 50MB
     });
 
-    const result = await importService.importChannelsOnly(response.data);
+    const result = await importService.analyzeM3uContent(response.data);
+    res.json(result);
+  } catch (error) {
+    console.error('Channels analysis error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST import channels from file upload
+router.post('/channels/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const content = req.file.buffer.toString('utf8');
+    const duplicateStrategy = req.body.duplicateStrategy || 'replace';
+    const result = await importService.importChannelsOnly(content, duplicateStrategy);
+
+    res.json(result);
+  } catch (error) {
+    console.error('Channels import error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST import channels from URL
+router.post('/channels/url', async (req, res) => {
+  try {
+    const { url, duplicateStrategy } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    // Fetch M3U content from URL
+    const response = await axios.get(url, {
+      timeout: 30000,
+      maxContentLength: 50 * 1024 * 1024 // 50MB
+    });
+
+    const result = await importService.importChannelsOnly(response.data, duplicateStrategy || 'replace');
     res.json(result);
   } catch (error) {
     console.error('Channels import error:', error);

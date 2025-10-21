@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  iptv-manager:
+    image: fpipio/iptv-manager:latest  # <-- Sostituisci TUO-USERNAME
+    container_name: iptv-manager
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+    networks:
+      - default
+
+networks:
+  default:
+    name: iptv-network

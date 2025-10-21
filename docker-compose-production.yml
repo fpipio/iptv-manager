@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  iptv-manager:
+    image: fpipio/iptv-manager:latest
+    container_name: iptv-manager
+    restart: unless-stopped
+    ports:
+      - "3010:3000"
+    volumes:
+      # Database e configurazioni su DISCO LOCALE (non NFS!)
+      - ./data:/app/data
+
+      # EPG grabber su disco locale (se usato)
+      - ./epg-grabber:/app/epg-grabber
+
+      # Film su NFS share (solo per .strm files)
+      - /media/movies:/app/movies
+    environment:
+      - NODE_ENV=production
+      - DB_PATH=/app/data/database.sqlite
+      - OUTPUT_PATH=/app/data/output
+    networks:
+      - default
+
+networks:
+  default:
+    name: iptv-network
