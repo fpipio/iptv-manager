@@ -6,6 +6,26 @@
 
 ---
 
+## ⚠️ PROSSIMA SESSIONE - TODO PRIORITARIO
+
+### 🔴 VERIFICA E TEST SUBTITLE BACKUP SYSTEM
+
+**Azione richiesta**: Testare il sistema di backup/restore dei sottotitoli `.srt` dopo il fix NFS cache.
+
+**Passi da eseguire**:
+1. Verificare che il backup automatico funzioni durante la cancellazione dei file STRM
+2. Testare il restore automatico dei sottotitoli quando si rigenerano i file
+3. Verificare la struttura della directory `.subtitles_backup/`
+4. Testare il ripristino parziale (backup di 1000 film, restore di 300)
+
+**Riferimenti**:
+- Documentazione: [SUBTITLE_BACKUP.md](SUBTITLE_BACKUP.md)
+- Codice: `backend/src/services/movieService.js` (funzioni `backupSubtitles`, `restoreSubtitles`)
+
+**Priorità**: Alta - Funzionalità critica per preservare sottotitoli scaricati da Emby
+
+---
+
 ## 📋 Indice
 
 - [Stato Attuale](#stato-attuale)
