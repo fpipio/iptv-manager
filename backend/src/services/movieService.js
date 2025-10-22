@@ -2,6 +2,7 @@ const db = require('../db/database');
 const fs = require('fs').promises;
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const yearLibraryService = require('./yearLibraryService');
 
 /**
  * Movie Service
@@ -98,6 +99,106 @@ async function ensureDirectoryExists(dirPath) {
 }
 
 /**
+ * Backup subtitles (.srt files) from a movie folder before deletion
+ * @param {string} movieDir - Movie folder path
+ * @returns {Promise<void>}
+ */
+async function backupSubtitles(movieDir) {
+  const movieName = path.basename(movieDir);
+  const moviesBaseDir = getMoviesDirectory();
+  const backupBaseDir = path.join(moviesBaseDir, '.subtitles_backup');
+  const movieBackupDir = path.join(backupBaseDir, movieName);
+
+  try {
+    const files = await fs.readdir(movieDir);
+    const srtFiles = files.filter(f => f.toLowerCase().endsWith('.srt'));
+
+    if (srtFiles.length > 0) {
+      console.log(`[MovieService] Backing up subtitles for "${movieName}": found ${srtFiles.length} file(s)`);
+      await ensureDirectoryExists(movieBackupDir);
+
+      for (const srtFile of srtFiles) {
+        const sourcePath = path.join(movieDir, srtFile);
+        const destPath = path.join(movieBackupDir, srtFile);
+
+        console.log(`[MovieService]   → Backing up: ${srtFile}`);
+        await fs.copyFile(sourcePath, destPath);
+      }
+
+      console.log(`[MovieService] ✓ Backed up ${srtFiles.length} subtitle(s) for "${movieName}"`);
+    }
+  } catch (error) {
+    // Silently handle errors (folder might not exist or be empty)
+    if (error.code !== 'ENOENT') {
+      console.warn(`[MovieService] Warning: Could not backup subtitles for "${movieName}":`, error.message);
+    }
+  }
+}
+
+/**
+ * Restore subtitles (.srt files) to a movie folder after creation
+ * @param {string} movieDir - Movie folder path
+ * @returns {Promise<void>}
+ */
+async function restoreSubtitles(movieDir) {
+  const movieName = path.basename(movieDir);
+  const moviesBaseDir = getMoviesDirectory();
+  const backupBaseDir = path.join(moviesBaseDir, '.subtitles_backup');
+  const movieBackupDir = path.join(backupBaseDir, movieName);
+
+  try {
+    const files = await fs.readdir(movieBackupDir);
+    const srtFiles = files.filter(f => f.toLowerCase().endsWith('.srt'));
+
+    if (srtFiles.length === 0) {
+      return; // No subtitles to restore
+    }
+
+    console.log(`[MovieService] Restoring subtitles for "${movieName}": found ${srtFiles.length} file(s) in backup`);
+
+    let restoredCount = 0;
+    let skippedCount = 0;
+    for (const srtFile of srtFiles) {
+      const sourcePath = path.join(movieBackupDir, srtFile);
+      const destPath = path.join(movieDir, srtFile);
+
+      // Check if file already exists (don't overwrite)
+      const exists = await fs.access(destPath).then(() => true).catch(() => false);
+      if (!exists) {
+        console.log(`[MovieService]   → Restoring: ${srtFile}`);
+        await fs.copyFile(sourcePath, destPath);
+
+        // Force sync to disk for remote filesystems (NFS/SMB)
+        try {
+          const fileHandle = await fs.open(destPath, 'r+');
+          await fileHandle.sync();
+          await fileHandle.close();
+        } catch (syncError) {
+          // Ignore sync errors (not critical)
+          console.warn(`[MovieService]   ⚠ Sync failed for ${srtFile}: ${syncError.message}`);
+        }
+
+        restoredCount++;
+      } else {
+        console.log(`[MovieService]   ⊘ Skipped (already exists): ${srtFile}`);
+        skippedCount++;
+      }
+    }
+
+    if (restoredCount > 0) {
+      console.log(`[MovieService] ✓ Restored ${restoredCount} subtitle(s) for "${movieName}"${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`);
+    } else if (skippedCount > 0) {
+      console.log(`[MovieService] ⊘ All ${skippedCount} subtitle(s) already exist for "${movieName}"`);
+    }
+  } catch (error) {
+    // Silently handle errors (no backup might exist, which is normal)
+    if (error.code !== 'ENOENT') {
+      console.warn(`[MovieService] Warning: Could not restore subtitles for "${movieName}":`, error.message);
+    }
+  }
+}
+
+/**
  * Create STRM file for a movie
  * @param {Object} movie - Movie object (must have tvg_name, url)
  * @param {string} baseDir - Base movies directory
@@ -106,18 +207,47 @@ async function ensureDirectoryExists(dirPath) {
 async function createStrmFile(movie, baseDir) {
   const safeName = sanitizeFilename(movie.tvg_name);
 
-  // FLAT Structure: /{baseDir}/{movie_name}/{movie_name}.strm
-  const folderPath = path.join(baseDir, safeName);
+  // Check if year organization is enabled
+  const yearSubdir = yearLibraryService.getSubdirectoryForMovie(movie.tvg_name);
+
+  let folderPath;
+  if (yearSubdir) {
+    // Year-organized structure: /{baseDir}/{year_library}/{movie_name}/{movie_name}.strm
+    folderPath = path.join(baseDir, yearSubdir, safeName);
+  } else {
+    // FLAT Structure: /{baseDir}/{movie_name}/{movie_name}.strm
+    folderPath = path.join(baseDir, safeName);
+  }
+
   const strmFileName = `${safeName}.strm`;
   const strmFilePath = path.join(folderPath, strmFileName);
 
-  // Create movie folder
+  // Create movie folder (recursive to handle year subdirectory)
   await ensureDirectoryExists(folderPath);
 
   // Write STRM file with stream URL
   await fs.writeFile(strmFilePath, movie.url, 'utf8');
 
+  // Force filesystem sync for NFS mounts (prevents cache issues)
+  try {
+    // Sync the file itself
+    const fileHandle = await fs.open(strmFilePath, 'r+');
+    await fileHandle.sync();
+    await fileHandle.close();
+
+    // Sync the parent directory to update directory metadata (critical for NFS)
+    const dirHandle = await fs.open(folderPath, 'r');
+    await dirHandle.sync();
+    await dirHandle.close();
+  } catch (syncError) {
+    // Sync failed but file was written - log warning but continue
+    console.warn(`[MovieService] Warning: Could not sync ${strmFilePath}:`, syncError.message);
+  }
+
   console.log(`[MovieService] Created STRM file: ${strmFilePath}`);
+
+  // Restore subtitles from backup if available
+  await restoreSubtitles(folderPath);
 
   return {
     folder_path: folderPath,
@@ -137,6 +267,9 @@ async function deleteStrmFile(movie) {
   }
 
   try {
+    // Backup subtitles before deleting
+    await backupSubtitles(movie.folder_path);
+
     // Delete STRM file
     try {
       await fs.unlink(movie.strm_file_path);
@@ -147,14 +280,12 @@ async function deleteStrmFile(movie) {
       }
     }
 
-    // Delete folder (if empty)
+    // Delete folder (recursively to include subtitles)
     try {
-      await fs.rmdir(movie.folder_path);
+      await fs.rm(movie.folder_path, { recursive: true, force: true });
       console.log(`[MovieService] Deleted folder: ${movie.folder_path}`);
     } catch (error) {
-      if (error.code === 'ENOTEMPTY') {
-        console.warn(`[MovieService] Folder not empty, skipping: ${movie.folder_path}`);
-      } else if (error.code !== 'ENOENT') {
+      if (error.code !== 'ENOENT') {
         console.error(`[MovieService] Error deleting folder:`, error);
       }
     }
@@ -363,13 +494,23 @@ async function syncFilesystemFromDb(remotePath, dryRun = false) {
     for (const movie of dbMovies) {
       const safeName = sanitizeFilename(movie.tvg_name);
 
-      // FLAT Structure: /{remotePath}/{movie_name}/{movie_name}.strm
-      const folderPath = path.join(remotePath, safeName);
-      const strmFileName = `${safeName}.strm`;
-      const strmFilePath = path.join(folderPath, strmFileName);
+      // Check if year organization is enabled
+      const yearSubdir = yearLibraryService.getSubdirectoryForMovie(movie.tvg_name);
 
-      // Check if folder/file exists
-      const folderExists = existingFolders.has(safeName);
+      let folderPath, strmFilePath;
+      if (yearSubdir) {
+        // Year-organized structure: /{remotePath}/{year_library}/{movie_name}/{movie_name}.strm
+        folderPath = path.join(remotePath, yearSubdir, safeName);
+      } else {
+        // FLAT Structure: /{remotePath}/{movie_name}/{movie_name}.strm
+        folderPath = path.join(remotePath, safeName);
+      }
+
+      const strmFileName = `${safeName}.strm`;
+      strmFilePath = path.join(folderPath, strmFileName);
+
+      // Check if folder/file exists (need to check actual filesystem, not just root folder)
+      const folderExists = existingFolders.has(safeName) || existingFolders.has(path.relative(remotePath, folderPath));
 
       if (!folderExists) {
         results.toCreate.push({
@@ -422,11 +563,30 @@ async function syncFilesystemFromDb(remotePath, dryRun = false) {
 
     // Phase 3: Apply changes (if not dry run)
     if (!dryRun) {
-      // Create missing files
+      // Delete obsolete folders (with subtitle backup)
+      for (const item of results.toDelete) {
+        try {
+          // Backup subtitles before deletion
+          await backupSubtitles(item.folderPath);
+
+          // Delete folder recursively
+          await fs.rm(item.folderPath, { recursive: true, force: true });
+          results.stats.deleted++;
+          console.log(`[MovieService] Deleted: ${item.folderName}`);
+        } catch (error) {
+          console.error(`[MovieService] Error deleting ${item.folderName}:`, error);
+          results.stats.errors++;
+        }
+      }
+
+      // Create missing files (with subtitle restore)
       for (const item of results.toCreate) {
         try {
           await ensureDirectoryExists(item.folderPath);
           await fs.writeFile(item.strmFilePath, item.url, 'utf8');
+
+          // Restore subtitles from backup if available
+          await restoreSubtitles(item.folderPath);
 
           // Update DB with paths
           db.prepare(
@@ -439,19 +599,6 @@ async function syncFilesystemFromDb(remotePath, dryRun = false) {
           console.log(`[MovieService] Created: ${item.tvg_name}`);
         } catch (error) {
           console.error(`[MovieService] Error creating ${item.tvg_name}:`, error);
-          results.stats.errors++;
-        }
-      }
-
-      // Delete obsolete folders
-      for (const item of results.toDelete) {
-        try {
-          // Delete folder recursively
-          await fs.rm(item.folderPath, { recursive: true, force: true });
-          results.stats.deleted++;
-          console.log(`[MovieService] Deleted: ${item.folderName}`);
-        } catch (error) {
-          console.error(`[MovieService] Error deleting ${item.folderName}:`, error);
           results.stats.errors++;
         }
       }

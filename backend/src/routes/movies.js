@@ -436,11 +436,9 @@ router.get('/emby-config', async (req, res) => {
 
     const serverUrl = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_server_url'`).get();
     const apiToken = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_api_token'`).get();
-    const libraryId = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_library_id'`).get();
 
     config.emby_server_url = serverUrl?.value || '';
     config.emby_api_token = apiToken?.value || '';
-    config.emby_library_id = libraryId?.value || '';
 
     res.json({
       success: true,
@@ -462,12 +460,12 @@ router.get('/emby-config', async (req, res) => {
  */
 router.put('/emby-config', async (req, res) => {
   try {
-    const { emby_server_url, emby_api_token, emby_library_id } = req.body;
+    const { emby_server_url, emby_api_token } = req.body;
 
-    if (!emby_server_url || !emby_api_token || !emby_library_id) {
+    if (!emby_server_url || !emby_api_token) {
       return res.status(400).json({
         success: false,
-        message: 'emby_server_url, emby_api_token, and emby_library_id are required'
+        message: 'emby_server_url and emby_api_token are required'
       });
     }
 
@@ -479,15 +477,13 @@ router.put('/emby-config', async (req, res) => {
 
     stmt.run('emby_server_url', emby_server_url);
     stmt.run('emby_api_token', emby_api_token);
-    stmt.run('emby_library_id', emby_library_id);
 
     res.json({
       success: true,
       message: 'Emby configuration updated successfully',
       data: {
         emby_server_url,
-        emby_api_token,
-        emby_library_id
+        emby_api_token
       }
     });
   } catch (error) {
@@ -502,7 +498,7 @@ router.put('/emby-config', async (req, res) => {
 
 /**
  * POST /api/movies/emby-refresh
- * Trigger Emby library refresh
+ * Trigger Emby library refresh for ALL libraries (global refresh)
  */
 router.post('/emby-refresh', async (req, res) => {
   try {
@@ -511,20 +507,18 @@ router.post('/emby-refresh', async (req, res) => {
     // Get Emby configuration
     const serverUrl = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_server_url'`).get();
     const apiToken = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_api_token'`).get();
-    const libraryId = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_library_id'`).get();
 
-    if (!serverUrl?.value || !apiToken?.value || !libraryId?.value) {
+    if (!serverUrl?.value || !apiToken?.value) {
       return res.status(400).json({
         success: false,
-        message: 'Emby is not configured. Please set up Emby configuration first.'
+        message: 'Emby server URL and API token are not configured. Please set up Emby configuration first.'
       });
     }
 
-    // Call Emby API to refresh library
-    // Note: fetch is natively available in Node.js 18+
-    const embyUrl = `${serverUrl.value}/emby/Library/Refresh?ItemId=${libraryId.value}`;
+    console.log(`[Emby] Triggering refresh for ALL libraries`);
 
-    console.log(`[Emby] Triggering library refresh: ${embyUrl}`);
+    // Trigger refresh for all libraries using global endpoint
+    const embyUrl = `${serverUrl.value}/emby/Library/Refresh`;
 
     const response = await fetch(embyUrl, {
       method: 'POST',
@@ -534,17 +528,17 @@ router.post('/emby-refresh', async (req, res) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Emby API returned ${response.status}: ${response.statusText}`);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    console.log(`[Emby] Library refresh triggered successfully`);
+    console.log(`[Emby] ✓ All libraries refresh triggered successfully`);
 
     res.json({
       success: true,
-      message: `Emby library refresh triggered successfully (Library ID: ${libraryId.value})`
+      message: 'Emby refresh triggered for all libraries successfully'
     });
   } catch (error) {
-    console.error('Error triggering Emby refresh:', error);
+    console.error('[Emby] Error triggering refresh:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to trigger Emby library refresh',
@@ -682,6 +676,360 @@ router.post('/reset/all', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to reset movies',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/movies/detect-duplicates
+ * Diagnostic endpoint: Detect movies with duplicate sanitized names
+ * Shows which movies would overwrite each other during STRM generation
+ */
+router.get('/detect-duplicates', async (req, res) => {
+  try {
+    const { groupTitle } = req.query;
+    const yearLibraryService = require('../services/yearLibraryService');
+
+    // Get movies (optionally filtered by group)
+    let query = 'SELECT id, tvg_name, group_title FROM movies WHERE 1=1';
+    const params = [];
+
+    if (groupTitle) {
+      query += ' AND group_title = ?';
+      params.push(groupTitle);
+    }
+
+    const movies = db.prepare(query).all(...params);
+
+    // Group by FULL PATH (year_library + sanitized name)
+    const pathMap = new Map();
+
+    for (const movie of movies) {
+      const sanitized = movieService.sanitizeFilename(movie.tvg_name);
+      const yearSubdir = yearLibraryService.getSubdirectoryForMovie(movie.tvg_name);
+
+      // Full path key: year_library/sanitized_name or just sanitized_name
+      const fullPathKey = yearSubdir ? `${yearSubdir}/${sanitized}` : sanitized;
+
+      if (!pathMap.has(fullPathKey)) {
+        pathMap.set(fullPathKey, []);
+      }
+
+      pathMap.get(fullPathKey).push({
+        id: movie.id,
+        tvg_name: movie.tvg_name,
+        group_title: movie.group_title,
+        sanitized_name: sanitized,
+        year_library: yearSubdir || 'FLAT'
+      });
+    }
+
+    // Find duplicates (same full path with 2+ movies)
+    const duplicates = [];
+    let totalDuplicateMovies = 0;
+
+    for (const [fullPath, moviesList] of pathMap.entries()) {
+      if (moviesList.length > 1) {
+        duplicates.push({
+          full_path: fullPath,
+          count: moviesList.length,
+          movies: moviesList
+        });
+        totalDuplicateMovies += moviesList.length;
+      }
+    }
+
+    // Sort by count descending
+    duplicates.sort((a, b) => b.count - a.count);
+
+    res.json({
+      success: true,
+      data: {
+        total_movies: movies.length,
+        unique_full_paths: pathMap.size,
+        duplicate_groups: duplicates.length,
+        duplicate_movies_count: totalDuplicateMovies,
+        expected_file_loss: totalDuplicateMovies - duplicates.length,
+        duplicates: duplicates
+      }
+    });
+  } catch (error) {
+    console.error('Error detecting duplicates:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to detect duplicates',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/movies/verify-strm-files
+ * Diagnostic endpoint: Verify which movies have missing STRM files
+ * Compares database records with actual filesystem
+ * Uses fs.stat() to verify files are actually regular files
+ */
+router.get('/verify-strm-files', async (req, res) => {
+  try {
+    const { groupTitle, deep } = req.query;
+    const fs = require('fs').promises;
+
+    // Get movies (optionally filtered by group)
+    let query = 'SELECT * FROM movies WHERE strm_enabled = 1';
+    const params = [];
+
+    if (groupTitle) {
+      query += ' AND group_title = ?';
+      params.push(groupTitle);
+    }
+
+    const movies = db.prepare(query).all(...params);
+
+    const results = {
+      total: movies.length,
+      existing: 0,
+      missing: 0,
+      invalid: 0,
+      missingMovies: [],
+      invalidMovies: []
+    };
+
+    // Check each movie
+    for (const movie of movies) {
+      if (movie.strm_file_path) {
+        try {
+          const stats = await fs.stat(movie.strm_file_path);
+
+          // Verify it's a regular file
+          if (stats.isFile()) {
+            results.existing++;
+          } else {
+            // Path exists but is not a file (directory, symlink, etc.)
+            results.invalid++;
+            results.invalidMovies.push({
+              id: movie.id,
+              tvg_name: movie.tvg_name,
+              group_title: movie.group_title,
+              strm_file_path: movie.strm_file_path,
+              sanitized_name: movieService.sanitizeFilename(movie.tvg_name),
+              issue: stats.isDirectory() ? 'Path is a directory' : 'Path is not a regular file'
+            });
+          }
+        } catch (error) {
+          results.missing++;
+          results.missingMovies.push({
+            id: movie.id,
+            tvg_name: movie.tvg_name,
+            group_title: movie.group_title,
+            strm_file_path: movie.strm_file_path,
+            sanitized_name: movieService.sanitizeFilename(movie.tvg_name),
+            error: error.code || error.message
+          });
+        }
+      } else {
+        // DB record without path (should not happen for enabled movies)
+        results.missing++;
+        results.missingMovies.push({
+          id: movie.id,
+          tvg_name: movie.tvg_name,
+          group_title: movie.group_title,
+          strm_file_path: null,
+          sanitized_name: movieService.sanitizeFilename(movie.tvg_name),
+          note: 'No path in database'
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      data: results
+    });
+  } catch (error) {
+    console.error('Error verifying STRM files:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify STRM files',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/movies/filesystem-scan
+ * Diagnostic endpoint: Scan actual filesystem and compare with database
+ * Counts real .strm files on disk vs database records
+ */
+router.get('/filesystem-scan', async (req, res) => {
+  try {
+    const { groupTitle, detailed } = req.query;
+    const fs = require('fs').promises;
+    const path = require('path');
+
+    const moviesDir = movieService.getMoviesDirectory();
+
+    // Get DB movies
+    let dbQuery = 'SELECT id, tvg_name, strm_file_path, group_title FROM movies WHERE strm_enabled = 1';
+    const dbParams = [];
+
+    if (groupTitle) {
+      dbQuery += ' AND group_title = ?';
+      dbParams.push(groupTitle);
+    }
+
+    const dbMovies = db.prepare(dbQuery).all(...dbParams);
+    const dbCount = dbMovies.length;
+
+    // Recursively count .strm files in filesystem
+    let filesystemCount = 0;
+    const strmFiles = [];
+
+    async function scanDirectory(dirPath) {
+      try {
+        const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+        for (const entry of entries) {
+          const fullPath = path.join(dirPath, entry.name);
+
+          if (entry.isDirectory()) {
+            await scanDirectory(fullPath);
+          } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.strm')) {
+            filesystemCount++;
+            strmFiles.push(path.relative(moviesDir, fullPath));
+          }
+        }
+      } catch (error) {
+        console.warn(`[FilesystemScan] Error scanning ${dirPath}:`, error.message);
+      }
+    }
+
+    await scanDirectory(moviesDir);
+
+    // If detailed mode, find which DB paths are invalid
+    const invalidPaths = [];
+    if (detailed === 'true') {
+      for (const movie of dbMovies) {
+        if (movie.strm_file_path) {
+          try {
+            const stats = await fs.stat(movie.strm_file_path);
+            if (!stats.isFile()) {
+              invalidPaths.push({
+                id: movie.id,
+                tvg_name: movie.tvg_name,
+                strm_file_path: movie.strm_file_path,
+                issue: stats.isDirectory() ? 'Is a directory' : 'Not a regular file'
+              });
+            }
+          } catch (error) {
+            invalidPaths.push({
+              id: movie.id,
+              tvg_name: movie.tvg_name,
+              strm_file_path: movie.strm_file_path,
+              issue: `File not found: ${error.code}`
+            });
+          }
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        movies_directory: moviesDir,
+        database_count: dbCount,
+        filesystem_count: filesystemCount,
+        difference: dbCount - filesystemCount,
+        sample_files: strmFiles.slice(0, 10),
+        ...(detailed === 'true' && { invalid_paths: invalidPaths })
+      }
+    });
+  } catch (error) {
+    console.error('Error scanning filesystem:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to scan filesystem',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/movies/path-mismatch
+ * Diagnostic endpoint: Compare DB paths with actual filesystem paths
+ * Find movies where DB path doesn't match any real file
+ */
+router.get('/path-mismatch', async (req, res) => {
+  try {
+    const { groupTitle } = req.query;
+    const fs = require('fs').promises;
+    const path = require('path');
+
+    const moviesDir = movieService.getMoviesDirectory();
+
+    // Get DB movies with paths
+    let dbQuery = 'SELECT id, tvg_name, strm_file_path, folder_path, group_title FROM movies WHERE strm_enabled = 1';
+    const dbParams = [];
+
+    if (groupTitle) {
+      dbQuery += ' AND group_title = ?';
+      dbParams.push(groupTitle);
+    }
+
+    const dbMovies = db.prepare(dbQuery).all(...dbParams);
+
+    // Scan actual filesystem and build Set of existing paths
+    const existingPaths = new Set();
+
+    async function scanDirectory(dirPath, relativePath = '') {
+      try {
+        const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+        for (const entry of entries) {
+          const fullPath = path.join(dirPath, entry.name);
+          const relPath = path.join(relativePath, entry.name);
+
+          if (entry.isDirectory()) {
+            await scanDirectory(fullPath, relPath);
+          } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.strm')) {
+            existingPaths.add(fullPath);
+          }
+        }
+      } catch (error) {
+        console.warn(`[PathMismatch] Error scanning ${dirPath}:`, error.message);
+      }
+    }
+
+    await scanDirectory(moviesDir);
+
+    // Find DB movies whose paths don't exist in filesystem
+    const mismatches = [];
+    for (const movie of dbMovies) {
+      if (movie.strm_file_path && !existingPaths.has(movie.strm_file_path)) {
+        mismatches.push({
+          id: movie.id,
+          tvg_name: movie.tvg_name,
+          group_title: movie.group_title,
+          db_path: movie.strm_file_path,
+          folder_path: movie.folder_path
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        movies_directory: moviesDir,
+        total_db_movies: dbMovies.length,
+        total_filesystem_files: existingPaths.size,
+        mismatches_count: mismatches.length,
+        mismatches: mismatches
+      }
+    });
+  } catch (error) {
+    console.error('Error checking path mismatch:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check path mismatch',
       error: error.message
     });
   }
