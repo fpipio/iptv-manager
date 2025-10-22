@@ -22,13 +22,13 @@
 
 ## 🎯 Stato Attuale
 
-**Ultimo Aggiornamento**: 2025-10-21
+**Ultimo Aggiornamento**: 2025-10-23
 
-**Versione Corrente**: v0.9.2
+**Versione Corrente**: v0.9.7
 
-**Fase Corrente**: ✅ **Fase 5 (Parziale)** - Ricerca Canali + Import Asincrono Implementati
+**Fase Corrente**: ✅ **Fase 5 (Parziale)** - Ricerca Canali + Import Asincrono + **Movie Cleanup System** + **Multi-Library Year Organization** + **Emby Global Refresh** + **Subtitle Backup System** + **NFS Cache Fix** Implementati
 
-**Prossima Fase**: Completare Fase 5 (Filtri avanzati) o Fase 3.2 (Serie TV)
+**Prossima Fase**: Fase 3.2 (Serie TV) o Completamento Fase 5 (Filtri Avanzati)
 
 ### Funzionalità Operative
 - ✅ **Import M3U asincrono con progress bar** (file upload + URL, dual-tab TV|Movies, batch processing 500 items)
@@ -36,6 +36,11 @@
 - ✅ Gestione gruppi (CRUD, riordinamento, gruppo speciale "Unassigned")
 - ✅ **Ricerca canali real-time** (search bar con filtro su nome, tvg-id, logo URL)
 - ✅ **Gestione film con generazione .strm files** (job queue asincrono, progress tracking)
+- ✅ **🧹 Movie Cleanup System** (rimozione automatica nomi attori, 89 pattern predefiniti, preview bulk, tracking storico)
+- ✅ **📅 Multi-Library Year Organization** (organizzazione film per periodi anno in sottocartelle, toggle enable/disable, statistiche distribuzione)
+- ✅ **🎬 Emby Integration** (refresh globale tutte le librerie con un solo click, configurazione semplificata)
+- ✅ **💾 Subtitle Backup System** (backup/restore automatico file .srt durante cancellazione/ripristino film, ripristino parziale supportato)
+- ✅ **🔧 NFS Cache Fix** (fsync file + directory per compatibilità NFS mount, 4 endpoint diagnostici per troubleshooting)
 - ✅ **EPG Multi-Source Matching System** (auto-matching, custom XML, grab ottimizzato)
 - ✅ **Gestione duplicati tvg-ID avanzata** (pre-import analysis, modal strategia, tracking permanente)
 - ✅ Export M3U e server HTTP per playlist
@@ -82,7 +87,9 @@
   ├── database.sqlite    # Database SQLite
   ├── output/            # M3U export files
   ├── epg/              # EPG XML files (guide.xml, custom.channels.xml)
-  └── movies/           # STRM files (struttura FLAT: {movie_name}/{movie_name}.strm)
+  └── movies/           # STRM files
+      ├── {movie_name}/{movie_name}.strm           # Struttura FLAT (default)
+      └── {year_library}/{movie_name}/{movie_name}.strm  # Con year organization
 ```
 
 ---
@@ -124,6 +131,130 @@
   - Auto-rename duplicati interni al file
   - Tracking permanente con campo `original_tvg_id`
   - Indicatori visivi in ManageView (icona ↻ arancione)
+
+### **Fase 5.1** - Movie Cleanup System (100%)
+- **🧹 Sistema di pulizia automatica nomi film** per rimuovere nomi attori e migliorare matching Emby/Plex
+- **Database Tables**:
+  - `cleanup_patterns`: 89 pattern predefiniti (attori italiani + internazionali) + custom regex
+  - `cleanup_history`: Tracking completo modifiche con audit trail
+  - `year_libraries`: Configurazione parametrica per organizzazione multi-libreria
+- **Pattern Detection**:
+  - Auto-detect pattern: `{Attore} {Titolo} ({Anno})` → `{Titolo} ({Anno})`
+  - Pattern reversibile: `{Titolo} {Attore} ({Anno})` → `{Titolo} ({Anno})`
+  - Support per pattern custom regex utente
+  - Enable/disable selettivo per pattern (toggle UI con label "Enabled/Disabled")
+- **Duplicate Handling** (🆕):
+  - Gestione automatica duplicati con vincolo UNIQUE su `tvg_name`
+  - Auto-rename con suffisso `[2]`, `[3]`, ecc. quando nome pulito esiste già
+  - Esempio: `Bruce Willis Acts of Violence (2018)` → `Acts of Violence (2018) [2]`
+  - Safety limit: fino a 100 duplicati gestiti, fallback timestamp per edge cases
+- **UI Features**:
+  - Tab "Cleanup Names" in MoviesView con sistema tabs completo
+  - **Category Filters**: Checkbox per filtrare per group_title prima del cleanup
+  - Pulsante "Analyze Movies" per scan completo collection (30k movies in 2-3s)
+  - Preview table con before/after (paginazione 50 risultati)
+  - Bulk selection con "Select All" checkbox
+  - Apply cleanup con conferma e toast feedback **con error reporting**
+  - Auto-reload analyze dopo cleanup (invece di rimozione manuale dalla lista)
+  - Statistiche real-time (patterns loaded, movies cleaned, last cleanup)
+  - **Pattern Manager UI**: Add/delete custom patterns, toggle enable/disable
+- **Backend API** (7 endpoints):
+  - `GET /api/cleanup/analyze` - Analizza film e restituisce suggestions
+  - `POST /api/cleanup/apply` - Applica cleanup bulk + history tracking + duplicate handling
+  - `GET /api/cleanup/patterns` - Lista **tutti** i pattern (enabled + disabled) con campo `enabled`
+  - `POST /api/cleanup/patterns` - Aggiungi pattern custom
+  - `DELETE /api/cleanup/patterns/:id` - Elimina pattern custom (non default)
+  - `PUT /api/cleanup/patterns/:id/toggle` - Enable/disable pattern
+  - `GET /api/cleanup/stats` - Statistiche cleanup
+- **Attori Predefiniti** (89 totali - aggiornato):
+  - 16 attori italiani: Alberto Sordi, Totò, Adriano Celentano, Massimo Troisi, Carlo Verdone, ecc.
+  - 73 attori internazionali: Adam Sandler, Al Pacino, Tom Cruise, Brad Pitt, Leonardo DiCaprio, Antonio Banderas, Anthony Hopkins, Jean-Claude Van Damme, ecc.
+- **Esempi di pulizia**:
+  - "Alberto Sordi Dove vai in vacanza? (1978)" → "Dove vai in vacanza? (1978)"
+  - "Adam Sandler 50 volte il primo bacio (2004)" → "50 volte il primo bacio (2004)"
+  - "Totò 47 morto che parla (1950)" → "47 morto che parla (1950)"
+  - "Bruce Willis Acts of Violence (2018)" → "Acts of Violence (2018) [2]" (se duplicato)
+- **Performance**: Analisi completa di 30k film in ~2-3 secondi
+- **Error Handling**: Toast con warning se cleanup parziale, dettagli errori in console browser
+
+### **Fase 5.2** - Multi-Library Year Organization (100%) 🆕
+- **📅 Organizzazione automatica film per periodi anno** con sottocartelle configurabili
+- **Database**: Tabella `year_libraries` con 5 configurazioni default (Pre-1980, 1980-2000, 2001-2020, 2021+, Unknown Year)
+- **Backend Service**: `yearLibraryService.js` per matching automatico film → library basato su anno estratto
+- **API Endpoints** (9 endpoints):
+  - `GET /api/year-libraries` - Lista tutte le year libraries con sort order
+  - `GET /api/year-libraries/config` - Ottieni stato enable/disable year organization
+  - `PUT /api/year-libraries/config` - Toggle year organization globale
+  - `POST /api/year-libraries` - Crea nuova year library
+  - `PUT /api/year-libraries/:id` - Modifica year library
+  - `DELETE /api/year-libraries/:id` - Elimina year library
+  - `PUT /api/year-libraries/:id/toggle` - Enable/disable singola library
+  - `PUT /api/year-libraries/reorder` - Riordina libraries (drag & drop)
+  - `GET /api/year-libraries/stats` - Statistiche distribuzione film per library
+- **UI Features**:
+  - Tab "Year Libraries" in MoviesView con interfaccia completa
+  - Toggle master per enable/disable year organization
+  - CRUD completo year libraries con validazione range anni
+  - Preview statistiche distribuzione (total, organized, unorganized, coverage %)
+  - Indicatori visivi per ogni library (nome, range, directory, movie count)
+  - Enable/disable toggle per singole libraries
+- **File Organization**:
+  - Struttura FLAT (default): `/{baseDir}/{movie_name}/{movie_name}.strm`
+  - Struttura YEAR-BASED (enabled): `/{baseDir}/{year_library}/{movie_name}/{movie_name}.strm`
+  - Esempio: `/app/data/movies/2001-2020/Inception (2010)/Inception (2010).strm`
+- **Auto-Detection**: Estrazione automatica anno dal nome film con regex `\((\d{4})\)`
+- **Fallback Handling**: Film senza anno valido → library "Unknown Year"
+- **Compatibilità**: Completamente backward-compatible, disabilitabile senza perdita dati
+
+### **Fase 5.3** - Emby Integration Improvement (100%) 🆕
+- **🎬 Refresh globale tutte le librerie Emby** con configurazione semplificata
+- **Modifiche Backend** (migration 013):
+  - Rimosso campo `emby_library_id` non più necessario
+  - Endpoint `/api/movies/emby-refresh` usa `/emby/Library/Refresh` (endpoint globale Emby)
+  - Configurazione richiede solo `emby_server_url` e `emby_api_token`
+- **API Endpoints** (3 endpoints):
+  - `GET /api/movies/emby-config` - Ottieni configurazione Emby (solo server URL e token)
+  - `PUT /api/movies/emby-config` - Salva configurazione Emby (validazione semplificata)
+  - `POST /api/movies/emby-refresh` - Trigger refresh globale tutte le librerie
+- **UI Migliorata**:
+  - Rimosso campo "Library ID" dall'interfaccia (configurazione più semplice)
+  - Pulsante "Refresh All Libraries" aggiorna tutte le librerie contemporaneamente
+  - Tooltip e descrizione aggiornati per chiarire comportamento globale
+- **Benefici**:
+  - Configurazione più semplice (solo 2 campi invece di 3)
+  - Nessun bisogno di trovare ID libreria specifica
+  - Aggiornamento più efficiente di tutte le librerie con un solo click
+- **Backward Compatibility**: Migration automatica rimuove vecchio `emby_library_id` dal database
+
+### **Fase 5.4** - Subtitle Backup System (100%) 🆕
+- **🎬 Sistema automatico di backup/restore file .srt** per preservare sottotitoli scaricati da Emby
+- **Problema risolto**: Quando deseleziono una categoria di film e i file `.strm` vengono cancellati, anche i sottotitoli `.srt` scaricati da Emby vengono persi
+- **Soluzione**: Backup automatico `.srt` prima della cancellazione + restore automatico alla rigenerazione
+- **Backup Structure** (FLAT):
+  - Directory: `{moviesDirectory}/.subtitles_backup/`
+  - Organizzazione: `{movie_name}/` (nome film come chiave univoca)
+  - Esempio: `.subtitles_backup/Inception (2010)/Inception (2010).en.srt`
+  - Indipendente da Year Libraries (funziona con qualsiasi configurazione)
+- **Funzioni implementate** in `movieService.js`:
+  - `backupSubtitles(movieDir)` - Copia file `.srt` in backup prima cancellazione
+  - `restoreSubtitles(movieDir)` - Ripristina file `.srt` dal backup dopo creazione
+- **Integrazione**:
+  - `deleteStrmFile()` - Backup automatico prima di `fs.rm()`
+  - `createStrmFile()` - Restore automatico dopo `fs.writeFile()`
+  - `syncFilesystemFromDb()` - Backup/restore durante sync massivo
+- **Ripristino parziale**:
+  - Cancello 1000 film → 1000 backup creati
+  - Ripristino 300 film → 300 sottotitoli ripristinati
+  - **Rimangono 700 backup disponibili** per futuri ripristini selettivi
+- **Caratteristiche**:
+  - ✅ Preserva sottotitoli durante cancellazione/ripristino film
+  - ✅ Funziona con ripristini parziali (backup persistente per film non ancora ripristinati)
+  - ✅ Non sovrascrive sottotitoli esistenti (safe)
+  - ✅ Compatibile con Year Libraries e struttura FLAT
+  - ✅ Logging dettagliato per debug
+  - ✅ Silenzioso quando non ci sono backup (nessun errore)
+  - ✅ Nessuna migration database richiesta (backward compatible)
+- **Documentazione**: Vedi [SUBTITLE_BACKUP.md](SUBTITLE_BACKUP.md) per dettagli completi e FAQ
 
 ---
 
@@ -264,13 +395,19 @@ is_name_overridden INTEGER  -- Flag per sapere quale usare
 
 **Quando aggiungere**: Esposizione su Internet o multi-utente
 
-### 6. Struttura FLAT per Movies
+### 6. Struttura FLAT per Movies (con Year Organization opzionale)
 **Decisione**: File `.strm` con struttura `{movie_name}/{movie_name}.strm` (NO group-title in path)
 
 **Motivazione**:
 - Compatibilità con media server (Jellyfin, Plex)
 - Evita path troppo lunghi (Windows 260 char limit)
 - Group-title può cambiare, nome film no
+
+**Year Organization** (v0.9.4+):
+- Opzionale: `{year_library}/{movie_name}/{movie_name}.strm`
+- Toggle globale enable/disable senza perdita dati
+- Configurazione year_libraries parametrica e personalizzabile
+- Migliora organizzazione e browsing per grandi collezioni (30k+ film)
 
 ---
 
@@ -365,6 +502,46 @@ const group = group_title.name; // Usa sempre nome gruppo corrente
 **Root Cause**: Vue Router keep-alive usa cache e non ricarica dati
 
 **Fix Suggerito**: Usare `onActivated` hook in MoviesView per ricaricare dati quando la pagina viene riattivata
+
+---
+
+### Bug #7: NFS Cache Prevents Immediate File Visibility (RISOLTO ✅)
+**Status**: 🟢 Resolved | **Priorità**: Critica | **Risolto**: 2025-10-22
+
+**Descrizione**: File `.strm` creati dal container Docker su mount NFS non erano immediatamente visibili, causando mismatch tra database (1337 record) e filesystem scan (1311-1329 file). I file esistevano fisicamente ma `readdir()` non li vedeva a causa della cache NFS metadata.
+
+**Sintomi**:
+- `fs.writeFile()` completava con successo
+- `fs.stat()` sul file appena creato funzionava
+- `fs.readdir()` sulla directory parent non mostrava il file
+- `find` dall'host vedeva tutti i file, ma il container ne vedeva meno
+
+**Root Cause**: NFS attribute caching e readdir caching impedivano la visibilità immediata dei metadata delle directory dopo la creazione di nuovi file.
+
+**Soluzione Implementata**:
+
+1. **Modifica codice** (`movieService.js`):
+   - Aggiunto `fsync()` sul file dopo `writeFile()` per flush buffer NFS
+   - Aggiunto `fsync()` sulla directory parent per forzare aggiornamento metadata
+
+2. **Configurazione NFS mount** (`/etc/fstab`):
+   ```
+   noac,actimeo=0,lookupcache=none,nordirplus
+   ```
+   - `noac` - Disabilita attribute caching
+   - `actimeo=0` - Timeout cache attributi a 0 secondi
+   - `lookupcache=none` - Nessuna cache per lookup
+   - `nordirplus` - Disabilita READDIRPLUS caching
+
+3. **Endpoint diagnostici** aggiunti:
+   - `GET /api/movies/detect-duplicates` - Rileva duplicati considerando year libraries
+   - `GET /api/movies/verify-strm-files` - Verifica esistenza file con `fs.stat()`
+   - `GET /api/movies/filesystem-scan` - Scan ricorsivo completo filesystem
+   - `GET /api/movies/path-mismatch` - Confronto diretto path DB vs filesystem
+
+**Risultato**: ✅ 1337/1337 file visibili immediatamente dopo creazione
+
+**Note**: Entrambe le soluzioni (codice + mount options) sono necessarie per affidabilità completa su NFS.
 
 ---
 
@@ -469,8 +646,9 @@ Vedi [DEPLOYMENT.md](DEPLOYMENT.md) e [QUICKSTART.md](QUICKSTART.md) per dettagl
 - ⚡ [QUICKSTART.md](QUICKSTART.md) - Quickstart guide
 - 🗄️ [DATABASE_MANAGEMENT.md](DATABASE_MANAGEMENT.md) - Gestione database
 - 📖 [EPG_MATCHING_GUIDE.md](EPG_MATCHING_GUIDE.md) - Guida EPG matching system
+- 💾 [SUBTITLE_BACKUP.md](SUBTITLE_BACKUP.md) - Sistema backup/restore sottotitoli
 
 ---
 
-**Ultimo aggiornamento**: 2025-10-21
+**Ultimo aggiornamento**: 2025-10-22
 **Prossima revisione**: Dopo completamento Fase 5 o Fase 3.2
