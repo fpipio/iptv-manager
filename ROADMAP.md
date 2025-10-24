@@ -26,7 +26,7 @@
 
 **Versione Corrente**: v0.9.9-dev
 
-**Fase Corrente**: ✅ **Fase 5 (Parziale)** + **Frontend Refactoring** + **Auto-Export M3U** - Ricerca Canali + Import Asincrono + Movie Cleanup + Multi-Library + Emby + Subtitle Backup + NFS Cache Fix + Tab-Based Navigation + **Export Automatico** Implementati
+**Fase Corrente**: ✅ **Fase 5 (Parziale)** + **Frontend Refactoring** + **Auto-Export M3U** + **EPG Alignment** - Ricerca Canali + Import Asincrono + Movie Cleanup + Multi-Library + Emby + Subtitle Backup + NFS Cache Fix + Tab-Based Navigation + Export Automatico + EPG=Playlist Sync Implementati
 
 **Prossima Fase**: Fase 9 (Mobile Responsive Design) o Fase 3.2 (Serie TV)
 
@@ -42,10 +42,11 @@
 - ✅ **🎬 Emby Integration** (toggle enable/disable, refresh globale tutte le librerie, configurazione in Settings, sezione condizionale in Movies)
 - ✅ **💾 Subtitle Backup System** (backup/restore automatico file .srt durante cancellazione/ripristino film, ripristino parziale supportato)
 - ✅ **🔧 NFS Cache Fix** (fsync file + directory per compatibilità NFS mount, 4 endpoint diagnostici per troubleshooting)
-- ✅ **EPG Multi-Source Matching System** (auto-matching, custom XML, grab ottimizzato)
+- ✅ **EPG Multi-Source Matching System** (auto-matching, custom XML, grab ottimizzato, sync gruppo-canali export status)
 - ✅ **Gestione duplicati tvg-ID avanzata** (pre-import analysis, modal strategia, tracking permanente)
 - ✅ **🔄 Auto-Export M3U** (rigenerazione automatica playlist dopo ogni modifica canali/gruppi, sempre aggiornata)
 - ✅ **📡 Export Tab in Channels** (URL playlist, statistiche real-time, download, force regenerate - spostato da Settings)
+- ✅ **🔗 EPG Matching = Playlist Alignment** (EPG matching mostra solo canali esportati, manual mappings preservati)
 - ✅ **Danger Zone centralizzata** (reset granulare TV/Movies in Settings > Advanced tab)
 - ✅ Container Docker con production deployment funzionante
 - ✅ Keep-alive routing per navigazione istantanea
@@ -530,6 +531,66 @@ components/
 - [ ] Export history con versioning (rollback a versione precedente)
 - [ ] Multiple export presets (diversi filtri, formati)
 - [ ] Preview playlist prima download (anteprima contenuto)
+
+### **Fase 5.7** - EPG Matching = Playlist Alignment (100%) 🆕
+
+**🔗 Sincronizzazione stato export gruppo → canali per allineamento EPG Matching con Playlist M3U**
+
+#### **Problema risolto**
+
+- **Inconsistenza dati**: Quando gruppo veniva deselezionato, `group.is_exported = 0` ma `channel.is_exported` rimaneva `1`
+- **EPG Matching disallineato**: Mostrava **tutti** i 735 canali invece dei 355 effettivamente esportati in playlist.m3u
+- **Confusione utente**: EPG Matching non rifletteva il contenuto della playlist finale
+
+#### **Soluzione implementata**
+
+**Backend** (`backend/src/routes/groups.js`):
+```javascript
+// PUT /api/groups/:id - Propaga is_exported a tutti i canali del gruppo
+if (is_exported !== undefined) {
+  db.prepare(`
+    UPDATE channels
+    SET is_exported = ?, updated_at = ?
+    WHERE custom_group_id = ?
+  `).run(is_exported ? 1 : 0, now, req.params.id);
+}
+```
+
+**Data sync** (fix storico per dati inconsistenti):
+```sql
+UPDATE channels
+SET is_exported = (
+  SELECT g.is_exported FROM group_titles g WHERE g.id = channels.custom_group_id
+)
+WHERE custom_group_id IS NOT NULL;
+-- 735 canali sincronizzati
+```
+
+#### **Comportamento garantito**
+
+1. **EPG Matching = Playlist M3U**:
+   - Stesso contenuto (solo canali con `is_exported = 1`)
+   - Stesso ordine (`group.sort_order`, `channel.sort_order`)
+   - Stesse statistiche (355 canali esportati su 735 totali)
+
+2. **Manual mappings preservati**:
+   - Mapping EPG salvato in `channel_epg_mappings` (LEFT JOIN, non CASCADE DELETE)
+   - Quando gruppo viene deselezionato: canale sparisce da EPG Matching ma mapping rimane in DB
+   - Quando gruppo viene riselezionato: canale riappare con mapping originale intatto
+
+3. **Workflow utente**:
+   - Deseleziona gruppo "SKY Cinema" (11 canali) → EPG Matching: 355 → 344 canali
+   - Manual mapping fatto su canale "SKY Cinema 1" → salvato in DB
+   - Deseleziona "SKY Cinema" → canale sparisce ma mapping preservato
+   - Riseleziona "SKY Cinema" → canale riappare con mapping già configurato ✅
+
+#### **Testing**
+
+- ✅ Group toggle: canali sincronizzati immediatamente (`is_exported` propagato)
+- ✅ EPG Matching: 355 canali (solo esportati), non più 735
+- ✅ Manual mapping: preservato dopo deselect/reselect gruppo
+- ✅ Playlist M3U: allineata con EPG Matching (stesso contenuto)
+- ✅ Data migration: 735 canali sincronizzati con successo
 
 ---
 
