@@ -98,6 +98,18 @@ router.put('/:id', (req, res) => {
       WHERE id = ?
     `).run(...values);
 
+    // If is_exported was changed, sync all channels in this group
+    if (is_exported !== undefined) {
+      db.prepare(`
+        UPDATE channels
+        SET is_exported = ?,
+            updated_at = ?
+        WHERE custom_group_id = ?
+      `).run(is_exported ? 1 : 0, now, req.params.id);
+
+      console.log(`[Groups] Synced is_exported=${is_exported} to all channels in group ${req.params.id}`);
+    }
+
     const group = db.prepare('SELECT * FROM group_titles WHERE id = ?').get(req.params.id);
 
     // Auto-regenerate playlist after group update
