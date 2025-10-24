@@ -912,11 +912,13 @@ curl http://localhost:3000/output/playlist.m3u
 
 ### Production Deploy
 ```bash
-# Deploy con docker-compose.prod.yml
-docker-compose -f docker-compose.prod.yml up -d
+# Deploy produzione standard
+docker-compose -f docker-compose.production.yml up -d
 
-# Deploy su server (pull da Docker Hub)
-docker-compose -f docker-compose-production.yml up -d
+# Deploy con porta custom
+PORT=3010 docker-compose -f docker-compose.production.yml up -d
+
+# Per NFS share: decommenta volume /media/movies in docker-compose.production.yml
 ```
 
 Vedi [DEPLOYMENT.md](DEPLOYMENT.md) e [QUICKSTART.md](QUICKSTART.md) per dettagli deployment completo.
@@ -928,10 +930,8 @@ Vedi [DEPLOYMENT.md](DEPLOYMENT.md) e [QUICKSTART.md](QUICKSTART.md) per dettagl
 - 📜 [HISTORY.md](HISTORY.md) - Changelog dettagliato e note di rilascio
 - 🚀 [DEPLOYMENT.md](DEPLOYMENT.md) - Guida deployment produzione
 - ⚡ [QUICKSTART.md](QUICKSTART.md) - Quickstart guide
-- 🗄️ [DATABASE_MANAGEMENT.md](DATABASE_MANAGEMENT.md) - Gestione database
 - 📖 [EPG_MATCHING_GUIDE.md](EPG_MATCHING_GUIDE.md) - Guida EPG matching system
 - 💾 [SUBTITLE_BACKUP.md](SUBTITLE_BACKUP.md) - Sistema backup/restore sottotitoli
-- 🎨 [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) - Documentazione completa Frontend Refactoring v0.9.8
 
 ---
 

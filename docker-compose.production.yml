@@ -1,0 +1,50 @@
+# Docker Compose for Production Deployment
+#
+# This file consolidates all production deployment scenarios
+#
+# Usage:
+#   Basic:     docker-compose -f docker-compose.production.yml up -d
+#   Custom port: PORT=3010 docker-compose -f docker-compose.production.yml up -d
+#   With NFS:  Uncomment /media/movies volume below
+#
+# Prerequisites:
+#   - Docker image available on Docker Hub (fpipio/iptv-manager:latest)
+#   - Or build locally first: docker-compose build
+
+version: '3.8'
+
+services:
+  iptv-manager:
+    # Pull from Docker Hub (recommended for production)
+    image: fpipio/iptv-manager:latest
+
+    container_name: iptv-manager
+    restart: unless-stopped
+
+    ports:
+      # Use PORT env variable, default to 3000
+      # Example: PORT=3010 docker-compose -f docker-compose.production.yml up -d
+      - "${PORT:-3000}:3000"
+
+    volumes:
+      # Database and configuration (REQUIRED - always on local disk, never NFS!)
+      - ./data:/app/data
+
+      # EPG grabber (OPTIONAL - uncomment if using local EPG grabber)
+      # - ./epg-grabber:/app/epg-grabber
+
+      # Movies directory (OPTIONAL - uncomment for NFS/network share)
+      # IMPORTANT: Only for .strm files, database must stay on local disk
+      # - /media/movies:/app/movies
+
+    environment:
+      - NODE_ENV=production
+      - DB_PATH=/app/data/database.sqlite
+      - OUTPUT_PATH=/app/data/output
+
+    networks:
+      - iptv-network
+
+networks:
+  iptv-network:
+    driver: bridge
