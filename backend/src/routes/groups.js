@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 const { v4: uuidv4 } = require('uuid');
+const exportService = require('../services/exportService');
 
 // GET all groups
 router.get('/', (req, res) => {
@@ -55,6 +56,10 @@ router.post('/', (req, res) => {
     `).run(id, name, sortOrder, 1, 0, now, now);
 
     const group = db.prepare('SELECT * FROM group_titles WHERE id = ?').get(id);
+
+    // Auto-regenerate playlist after group creation
+    exportService.autoRegeneratePlaylist();
+
     res.status(201).json(group);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -94,6 +99,10 @@ router.put('/:id', (req, res) => {
     `).run(...values);
 
     const group = db.prepare('SELECT * FROM group_titles WHERE id = ?').get(req.params.id);
+
+    // Auto-regenerate playlist after group update
+    exportService.autoRegeneratePlaylist();
+
     res.json(group);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -117,6 +126,10 @@ router.put('/reorder/all', (req, res) => {
     });
 
     updateMany(groupIds);
+
+    // Auto-regenerate playlist after group reorder
+    exportService.autoRegeneratePlaylist();
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -138,6 +151,10 @@ router.delete('/:id', (req, res) => {
       .run(UNASSIGNED_GROUP_ID, req.params.id);
 
     db.prepare('DELETE FROM group_titles WHERE id = ?').run(req.params.id);
+
+    // Auto-regenerate playlist after group deletion
+    exportService.autoRegeneratePlaylist();
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -155,6 +172,9 @@ router.post('/reset/all', (req, res) => {
 
     // Delete all groups except Unassigned (is_special = 1)
     const result = db.prepare('DELETE FROM group_titles WHERE is_special = 0').run();
+
+    // Auto-regenerate playlist after group reset
+    exportService.autoRegeneratePlaylist();
 
     res.json({
       success: true,

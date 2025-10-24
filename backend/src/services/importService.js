@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const { parseM3U } = require('./m3uParser');
 const movieService = require('./movieService');
 const jobQueue = require('./jobQueue');
+const exportService = require('./exportService');
 
 /**
  * Find or create a group by name
@@ -283,6 +284,9 @@ async function importChannelsOnly(content, duplicateStrategy = 'replace', jobId 
       skipped: skippedChannels
     });
   }
+
+  // Auto-regenerate playlist after channels import
+  exportService.autoRegeneratePlaylist();
 
   return {
     success: true,

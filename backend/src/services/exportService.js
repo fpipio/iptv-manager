@@ -97,7 +97,54 @@ async function previewM3U() {
   return generateM3UContent();
 }
 
+/**
+ * Auto-regenerate playlist (silent, non-blocking)
+ * Used as hook after channel/group modifications
+ */
+async function autoRegeneratePlaylist() {
+  try {
+    await generateM3U();
+    console.log('[ExportService] Playlist auto-regenerated');
+  } catch (error) {
+    console.error('[ExportService] Auto-regenerate failed:', error.message);
+    // Non-blocking: don't throw error, just log
+  }
+}
+
+/**
+ * Get playlist statistics without regenerating
+ */
+async function getPlaylistStats() {
+  const outputPath = process.env.OUTPUT_PATH || path.join(__dirname, '../../../data/output');
+  const filePath = path.join(outputPath, 'playlist.m3u');
+
+  try {
+    const stats = await fs.stat(filePath);
+    const totalGroups = db.prepare('SELECT COUNT(*) as count FROM group_titles WHERE is_exported = 1').get();
+    const totalChannels = db.prepare('SELECT COUNT(*) as count FROM channels WHERE is_exported = 1').get();
+
+    return {
+      exists: true,
+      fileSize: `${(stats.size / 1024).toFixed(2)} KB`,
+      lastModified: stats.mtime,
+      channels: totalChannels.count,
+      groups: totalGroups.count
+    };
+  } catch (error) {
+    // File doesn't exist yet
+    return {
+      exists: false,
+      fileSize: '0 KB',
+      lastModified: null,
+      channels: 0,
+      groups: 0
+    };
+  }
+}
+
 module.exports = {
   generateM3U,
-  previewM3U
+  previewM3U,
+  autoRegeneratePlaylist,
+  getPlaylistStats
 };

@@ -24,4 +24,15 @@ router.get('/preview', async (req, res) => {
   }
 });
 
+// GET playlist statistics
+router.get('/stats', async (req, res) => {
+  try {
+    const stats = await exportService.getPlaylistStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('Stats error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

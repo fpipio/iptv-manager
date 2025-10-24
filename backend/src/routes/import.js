@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const axios = require('axios');
 const importService = require('../services/importService');
+const exportService = require('../services/exportService');
 const jobQueue = require('../services/jobQueue');
 const { parseM3U } = require('../services/m3uParser');
 

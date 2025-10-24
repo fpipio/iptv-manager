@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
+const exportService = require('../services/exportService');
 
 // GET all channels (optionally filtered by group)
 router.get('/', (req, res) => {
@@ -104,6 +105,9 @@ router.put('/:id', (req, res) => {
       WHERE c.id = ?
     `).get(req.params.id);
 
+    // Auto-regenerate playlist after channel update
+    exportService.autoRegeneratePlaylist();
+
     res.json(channel);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -127,6 +131,10 @@ router.put('/reorder/group', (req, res) => {
     });
 
     updateMany(channelIds);
+
+    // Auto-regenerate playlist after channel reorder
+    exportService.autoRegeneratePlaylist();
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -137,6 +145,10 @@ router.put('/reorder/group', (req, res) => {
 router.delete('/:id', (req, res) => {
   try {
     db.prepare('DELETE FROM channels WHERE id = ?').run(req.params.id);
+
+    // Auto-regenerate playlist after channel deletion
+    exportService.autoRegeneratePlaylist();
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -151,6 +163,9 @@ router.post('/reset/all', (req, res) => {
 
     // Delete all channels
     const result = db.prepare('DELETE FROM channels').run();
+
+    // Auto-regenerate playlist after reset
+    exportService.autoRegeneratePlaylist();
 
     res.json({
       success: true,
