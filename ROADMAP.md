@@ -6,26 +6,6 @@
 
 ---
 
-## ⚠️ PROSSIMA SESSIONE - TODO PRIORITARIO
-
-### 🔴 VERIFICA E TEST SUBTITLE BACKUP SYSTEM
-
-**Azione richiesta**: Testare il sistema di backup/restore dei sottotitoli `.srt` dopo il fix NFS cache.
-
-**Passi da eseguire**:
-1. Verificare che il backup automatico funzioni durante la cancellazione dei file STRM
-2. Testare il restore automatico dei sottotitoli quando si rigenerano i file
-3. Verificare la struttura della directory `.subtitles_backup/`
-4. Testare il ripristino parziale (backup di 1000 film, restore di 300)
-
-**Riferimenti**:
-- Documentazione: [SUBTITLE_BACKUP.md](SUBTITLE_BACKUP.md)
-- Codice: `backend/src/services/movieService.js` (funzioni `backupSubtitles`, `restoreSubtitles`)
-
-**Priorità**: Alta - Funzionalità critica per preservare sottotitoli scaricati da Emby
-
----
-
 ## 📋 Indice
 
 - [Stato Attuale](#stato-attuale)
@@ -42,15 +22,16 @@
 
 ## 🎯 Stato Attuale
 
-**Ultimo Aggiornamento**: 2025-10-23
+**Ultimo Aggiornamento**: 2025-10-24
 
-**Versione Corrente**: v0.9.7
+**Versione Corrente**: v0.9.9-dev
 
-**Fase Corrente**: ✅ **Fase 5 (Parziale)** - Ricerca Canali + Import Asincrono + **Movie Cleanup System** + **Multi-Library Year Organization** + **Emby Global Refresh** + **Subtitle Backup System** + **NFS Cache Fix** Implementati
+**Fase Corrente**: ✅ **Fase 5 (Parziale)** + **Frontend Refactoring** - Ricerca Canali + Import Asincrono + **Movie Cleanup System** + **Multi-Library Year Organization** + **Emby Integration** + **Subtitle Backup System** (✅ Testato e Funzionante) + **NFS Cache Fix** + **Tab-Based Navigation** Implementati
 
-**Prossima Fase**: Fase 3.2 (Serie TV) o Completamento Fase 5 (Filtri Avanzati)
+**Prossima Fase**: Fase 9 (Mobile Responsive Design) o Fase 3.2 (Serie TV)
 
 ### Funzionalità Operative
+- ✅ **🎨 Tab-Based Navigation UI** (architettura frontend refactored: 3 aree principali - Channels, Movies, Settings - con tabs interno per feature grouping)
 - ✅ **Import M3U asincrono con progress bar** (file upload + URL, dual-tab TV|Movies, batch processing 500 items)
 - ✅ Gestione completa canali TV (CRUD, drag & drop, bulk edit, selezione multipla)
 - ✅ Gestione gruppi (CRUD, riordinamento, gruppo speciale "Unassigned")
@@ -58,13 +39,13 @@
 - ✅ **Gestione film con generazione .strm files** (job queue asincrono, progress tracking)
 - ✅ **🧹 Movie Cleanup System** (rimozione automatica nomi attori, 89 pattern predefiniti, preview bulk, tracking storico)
 - ✅ **📅 Multi-Library Year Organization** (organizzazione film per periodi anno in sottocartelle, toggle enable/disable, statistiche distribuzione)
-- ✅ **🎬 Emby Integration** (refresh globale tutte le librerie con un solo click, configurazione semplificata)
+- ✅ **🎬 Emby Integration** (toggle enable/disable, refresh globale tutte le librerie, configurazione in Settings, sezione condizionale in Movies)
 - ✅ **💾 Subtitle Backup System** (backup/restore automatico file .srt durante cancellazione/ripristino film, ripristino parziale supportato)
 - ✅ **🔧 NFS Cache Fix** (fsync file + directory per compatibilità NFS mount, 4 endpoint diagnostici per troubleshooting)
 - ✅ **EPG Multi-Source Matching System** (auto-matching, custom XML, grab ottimizzato)
 - ✅ **Gestione duplicati tvg-ID avanzata** (pre-import analysis, modal strategia, tracking permanente)
-- ✅ Export M3U e server HTTP per playlist
-- ✅ Reset granulare contestuale (separazione domini TV/Movies)
+- ✅ **Export M3U con preview e download** (generazione M3U, preview contenuto, download diretto)
+- ✅ **Danger Zone centralizzata** (reset granulare TV/Movies in Settings > Advanced tab)
 - ✅ Container Docker con production deployment funzionante
 - ✅ Keep-alive routing per navigazione istantanea
 
@@ -72,6 +53,7 @@
 - ❌ Gestione Serie TV
 - ❌ Filtri avanzati (per gruppo, stato, modifiche)
 - ❌ Schedulazione automatica EPG
+- ❌ Mobile PWA (Progressive Web App)
 
 ---
 
@@ -246,7 +228,7 @@
   - Aggiornamento più efficiente di tutte le librerie con un solo click
 - **Backward Compatibility**: Migration automatica rimuove vecchio `emby_library_id` dal database
 
-### **Fase 5.4** - Subtitle Backup System (100%) 🆕
+### **Fase 5.4** - Subtitle Backup System (100% ✅ TESTATO) 🆕
 - **🎬 Sistema automatico di backup/restore file .srt** per preservare sottotitoli scaricati da Emby
 - **Problema risolto**: Quando deseleziono una categoria di film e i file `.strm` vengono cancellati, anche i sottotitoli `.srt` scaricati da Emby vengono persi
 - **Soluzione**: Backup automatico `.srt` prima della cancellazione + restore automatico alla rigenerazione
@@ -257,24 +239,143 @@
   - Indipendente da Year Libraries (funziona con qualsiasi configurazione)
 - **Funzioni implementate** in `movieService.js`:
   - `backupSubtitles(movieDir)` - Copia file `.srt` in backup prima cancellazione
-  - `restoreSubtitles(movieDir)` - Ripristina file `.srt` dal backup dopo creazione
+  - `restoreSubtitles(movieDir)` - Ripristina file `.srt` dal backup dopo creazione (usa `copyFile`, non `rename`)
 - **Integrazione**:
   - `deleteStrmFile()` - Backup automatico prima di `fs.rm()`
   - `createStrmFile()` - Restore automatico dopo `fs.writeFile()`
   - `syncFilesystemFromDb()` - Backup/restore durante sync massivo
+- **Persistenza Backup** (⚠️ IMPORTANTE):
+  - **I backup sono PERMANENTI** e non vengono cancellati dopo il ripristino
+  - Usa `copyFile()` invece di `rename()` → backup rimane disponibile per futuri usi
+  - Puoi cancellare e ripristinare lo stesso film infinite volte senza perdere sottotitoli
+  - Funge da **cache permanente** e backup di sicurezza
+  - Pulizia manuale opzionale se `.subtitles_backup/` diventa troppo grande (~200MB per 1000 film)
 - **Ripristino parziale**:
   - Cancello 1000 film → 1000 backup creati
   - Ripristino 300 film → 300 sottotitoli ripristinati
-  - **Rimangono 700 backup disponibili** per futuri ripristini selettivi
+  - **Tutti i 1000 backup rimangono disponibili** (anche quelli già ripristinati)
 - **Caratteristiche**:
   - ✅ Preserva sottotitoli durante cancellazione/ripristino film
-  - ✅ Funziona con ripristini parziali (backup persistente per film non ancora ripristinati)
+  - ✅ Backup permanente (zero perdita dati anche con ripristini multipli)
+  - ✅ Funziona con ripristini parziali
   - ✅ Non sovrascrive sottotitoli esistenti (safe)
   - ✅ Compatibile con Year Libraries e struttura FLAT
   - ✅ Logging dettagliato per debug
   - ✅ Silenzioso quando non ci sono backup (nessun errore)
   - ✅ Nessuna migration database richiesta (backward compatible)
+- **Testing** (2025-10-24): ✅ Sistema testato e funzionante, backup e restore operano correttamente
 - **Documentazione**: Vedi [SUBTITLE_BACKUP.md](SUBTITLE_BACKUP.md) per dettagli completi e FAQ
+
+### **Fase 5.5** - Frontend UI Refactoring (100%) 🆕
+- **🎨 Refactoring completo architettura frontend** da navigazione flat a tab-based navigation
+- **Problema risolto**: Navigazione con 6 link piatti (Import, Manage, Movies, Export, Settings, EPG Matching) era confusa e difficile da scalare
+- **Soluzione**: Architettura feature-based con 3 aree principali + tabs interni
+
+#### **Architettura Prima vs Dopo**
+**❌ PRIMA** (Flat Navigation - 6 link):
+```
+Import | Manage | Movies | Export | Settings | EPG Matching
+```
+
+**✅ DOPO** (Feature-Based - 3 aree):
+```
+📺 Channels          🎬 Movies           ⚙️ Settings
+├─ Import            ├─ Import           ├─ General
+├─ Manage            ├─ Library          ├─ EPG
+└─ EPG Matching      ├─ Cleanup          └─ Advanced (Danger Zone)
+                     └─ Year Organization
+```
+
+#### **Modifiche Implementate**
+1. **Channels Area** (`ChannelsView.vue`):
+   - 3 tabs: Import, Manage, EPG Matching
+   - Componenti estratti: `ChannelsImportTab.vue`, `ChannelsManageTab.vue`, `ChannelsEpgMatchingTab.vue`
+   - Import M3U dual-tab (TV/Movies) con gestione duplicati tvg-id
+
+2. **Movies Area** (`MoviesView.vue`):
+   - 4 tabs: Import, Library, Cleanup, Year Organization
+   - Tab Import: Import M3U dedicato per film
+   - Tab Library: Gestione libreria + STRM Output Directory + Emby Integration condizionale
+   - Tab Cleanup: Sistema pulizia nomi attori (già esistente)
+   - Tab Year Organization: Organizzazione multi-library per anno (già esistente)
+
+3. **Settings Area** (`SettingsView.vue`):
+   - 3 tabs: General, EPG, Advanced
+   - **General Tab**:
+     - Output Streams (M3U playlist URL, EPG XML URL)
+     - Export M3U Playlist (generazione, preview, download)
+     - Integrations (Emby toggle + configurazione)
+   - **EPG Tab**:
+     - EPG Sources management
+     - EPG Configuration (grab days, connections)
+     - EPG Status monitoring
+   - **Advanced Tab**:
+     - Danger Zone (reset TV channels, groups, EPG, movies, everything)
+
+4. **Database Migration 014**:
+   - Aggiunto campo `emby_enabled` in `epg_config` per persistenza toggle Emby
+   - Default: enabled se `emby_server_url` già configurato, disabled altrimenti
+
+5. **Backend API Updates**:
+   - `GET/PUT /api/movies/emby-config`: Supporto campo `emby_enabled`
+   - Toggle salva immediatamente stato in database
+
+6. **Frontend Event System**:
+   - CustomEvent `emby-config-updated` per sincronizzazione Settings → Movies
+   - Sezione Emby in Movies > Library visibile solo se `emby_enabled === true`
+
+#### **Component Organization**
+```
+components/
+├── channels/
+│   ├── ChannelsImportTab.vue
+│   ├── ChannelsManageTab.vue
+│   └── ChannelsEpgMatchingTab.vue
+├── movies/
+│   ├── MoviesImportTab.vue
+│   ├── CleanupTab.vue
+│   └── YearLibrariesTab.vue
+└── shared/
+    ├── ChannelEditModal.vue
+    ├── GroupEditModal.vue
+    ├── DuplicateStrategyModal.vue
+    ├── ConfirmDialog.vue
+    └── ToastNotification.vue
+```
+
+#### **Router & Legacy Redirects**
+- **Nuove rotte**:
+  - `/channels` → ChannelsView (default: import tab)
+  - `/movies` → MoviesView (default: import tab)
+  - `/settings` → SettingsView (default: general tab)
+
+- **Legacy redirects** (backward compatibility):
+  - `/import` → `/channels`
+  - `/manage` → `/channels`
+  - `/epg/matching` → `/channels`
+  - `/export` → `/settings`
+
+#### **Benefici**
+- ✅ **Scalabilità**: Pronto per Serie TV (stesso pattern tabs)
+- ✅ **UX migliorata**: Navigazione intuitiva con 3 aree principali
+- ✅ **Consistenza**: Tutte le view usano pattern tabs
+- ✅ **Manutenibilità**: Componenti organizzati per feature
+- ✅ **Backward compatible**: Legacy URLs reindirizzano automaticamente
+- ✅ **Separation of concerns**: Channels, Movies, Settings separati
+
+#### **Bug Fix**
+- ✅ Toggle Emby non persisteva stato (risolto con migration 014)
+- ✅ `addToast` undefined error in catch block (risolto con null checks)
+- ✅ Sezione Emby visibile anche quando disabilitata (risolto con computed `isEmbyConfigured`)
+
+#### **Docker Deployment**
+- ✅ Frontend compilato e deployato su porta 3000
+- ✅ Docker image pushato su Docker Hub: `fpipio/iptv-manager:latest`
+- ✅ Migration 014 applicata automaticamente all'avvio
+
+#### **Documentazione**
+- Vedi [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) per dettagli completi
+- File structure dettagliata, test checklist, metriche LOC
 
 ---
 
@@ -367,6 +468,138 @@
 
 ---
 
+### Fase 9 - Mobile Responsive Design
+**Status**: ❌ Non iniziata | **Priorità**: Alta
+
+**Obiettivo**: Rendere l'interfaccia web esistente perfettamente usabile su dispositivi mobile (smartphone e tablet) tramite responsive design
+
+**Decisione Architetturale**: NO PWA, solo **Responsive Web App**
+
+**Motivazione**:
+- ✅ **Uso saltuario**: L'app è usata per configurazione/gestione, non quotidianamente
+- ✅ **Bookmark sufficiente**: Gli utenti possono salvare `http://IP:3000` nei preferiti
+- ✅ **Zero complessità**: No service worker, no manifest, no cache offline
+- ✅ **Self-hosted**: Richiede sempre connessione al backend Docker (offline inutile)
+- ✅ **Multi-device naturale**: Stessa URL accessibile da PC, tablet, smartphone
+- ✅ **Update immediati**: Refresh = ultima versione, no cache PWA
+
+**PWA Rejected** perché:
+- ❌ Offline mode inutile (serve backend sempre online)
+- ❌ Install prompt confonde utenti
+- ❌ Icona home screen non aggiunge valore
+- ❌ Notifiche push non necessarie
+- ❌ Overhead tecnico non giustificato
+
+---
+
+#### 9.1 Responsive Layout Audit (2 giorni)
+- [ ] **Breakpoints Analysis**
+  - Verificare tutti i componenti su mobile (320px-480px)
+  - Verificare layout smartphone large (480px-640px)
+  - Verificare layout tablet portrait (640px-768px)
+  - Verificare layout tablet landscape (768px-1024px)
+  - Testare transizioni tra breakpoints
+
+- [ ] **Component Fixes**
+  - Tabelle: scrollabili orizzontalmente su mobile con swipe
+  - Modali: adattare a schermo piccolo (padding ridotto, bottom sheet opzionale)
+  - Dropdown: espandere a full-width su mobile
+  - Forms: input full-width, font-size minimo 16px (evita zoom iOS)
+  - Cards: stack verticale invece di grid su mobile
+  - Navigation: hamburger menu collapsabile
+
+- [ ] **Typography & Spacing**
+  - Font-size leggibile su mobile (min 14px body, 16px input)
+  - Line-height aumentato per leggibilità touch
+  - Padding/margin ridotti ma touch-friendly
+  - Headings scalabili con `clamp()` o breakpoints
+
+#### 9.2 Touch Optimization (1 giorno)
+- [ ] **Touch Targets**
+  - Pulsanti: minimo 44x44px (Apple HIG) / 48x48px (Material Design)
+  - Checkbox/radio: aumentare area cliccabile
+  - Link: padding generoso per tap accuracy
+  - Icon buttons: aumentare dimensione su mobile
+
+- [ ] **Touch Interactions**
+  - Verificare drag & drop su touch devices (Channels/Groups reorder)
+  - Testare bulk selection con tap (no Shift+Click su mobile)
+  - Swipe orizzontale per tabelle scrollabili
+  - Long-press per azioni secondarie (opzionale)
+
+- [ ] **Mobile-Specific UX**
+  - Sticky headers per tabelle lunghe
+  - Scroll-to-top button su liste lunghe
+  - Loading spinners visibili su azioni asincrone
+  - Toast notifications ottimizzate (bottom position su mobile)
+
+#### 9.3 Navigation & Layout (1 giorno)
+- [ ] **Responsive Navigation**
+  - Hamburger menu per navigazione principale su mobile
+  - Tab navigation orizzontale scrollabile (se overflow)
+  - Breadcrumb collassato su mobile (icona home + current page)
+  - Bottom navigation bar (opzionale, per accesso rapido)
+
+- [ ] **Adaptive Layouts**
+  - Sidebar collassabile o convertita in drawer mobile
+  - Grid → Stack layout su mobile (channels, movies)
+  - Split view → Full page su mobile
+  - Fixed header/footer per massimizzare content area
+
+- [ ] **Viewport & Meta Tags**
+  - Verificare `<meta name="viewport">` corretto
+  - Prevent zoom su input focus (font-size >= 16px)
+  - Safe area insets per notch/home indicator (iOS)
+
+#### 9.4 Testing & Validation (mezza giornata)
+- [ ] **Device Testing**
+  - Test iOS Safari (iPhone SE, iPhone 14, iPad)
+  - Test Chrome Android (various screen sizes)
+  - Test landscape/portrait rotation
+  - Verificare scroll performance (no lag)
+
+- [ ] **Browser DevTools**
+  - Chrome Device Mode: testare tutti i preset
+  - Firefox Responsive Design Mode
+  - Safari Responsive Design Mode
+  - Lighthouse mobile audit (score > 90)
+
+- [ ] **Real Device Testing**
+  - Test su almeno 2 dispositivi fisici (iOS + Android)
+  - Verificare touch gestures fluidi
+  - Check performance su rete mobile (4G/5G)
+
+---
+
+#### Tech Stack
+- **CSS Framework**: TailwindCSS (già in uso, excellent responsive utilities)
+- **Responsive Strategy**: Mobile-first breakpoints
+- **Testing Tools**: Chrome DevTools, Lighthouse, BrowserStack (opzionale)
+- **No Dependencies**: Zero librerie aggiuntive necessarie
+
+#### Effort Estimate
+- **Responsive Layout Audit**: 2 giorni
+- **Touch Optimization**: 1 giorno
+- **Navigation & Layout**: 1 giorno
+- **Testing & Validation**: 0.5 giorni
+- **TOTALE**: **4-5 giorni**
+
+#### Deliverables
+- ✅ UI completamente responsive (320px-1024px+)
+- ✅ Touch-friendly (tap targets 44x44px+)
+- ✅ Performance mobile ottimizzata
+- ✅ Testato su iOS Safari + Chrome Android
+- ✅ Zero overhead PWA
+- ✅ Backward compatible (no breaking changes)
+
+#### Future Considerations
+Se in futuro servisse PWA (improbabile):
+- Service Worker può essere aggiunto in 1-2 giorni
+- Manifest.json in 1 ora
+- Ma per ora: **YAGNI** (You Aren't Gonna Need It)
+
+---
+
 ## 🎓 Decisioni Architetturali
 
 ### 1. Matching Canali: Solo `tvg_id`
@@ -428,6 +661,37 @@ is_name_overridden INTEGER  -- Flag per sapere quale usare
 - Toggle globale enable/disable senza perdita dati
 - Configurazione year_libraries parametrica e personalizzabile
 - Migliora organizzazione e browsing per grandi collezioni (30k+ film)
+
+### 7. Mobile: Responsive Web Only (NO PWA)
+**Decisione**: Implementare **solo responsive design**, NO Progressive Web App
+
+**Motivazione**:
+- ✅ **Self-hosted app**: Richiede sempre backend Docker attivo (offline inutile)
+- ✅ **Uso saltuario**: Configurazione/gestione, non app quotidiana
+- ✅ **Bookmark sufficiente**: `http://IP:3000` salvato nei preferiti è sufficiente
+- ✅ **Zero overhead**: No service worker, no manifest, no cache management
+- ✅ **Update istantanei**: Browser refresh = ultima versione (no PWA cache)
+- ✅ **Semplicità**: Responsive CSS è 10x più semplice di PWA setup
+
+**PWA Rejected perché**:
+- ❌ Offline mode inutile (serve connessione al backend sempre)
+- ❌ Install prompt confonde utenti (non è WhatsApp/Instagram)
+- ❌ Notifiche push non necessarie
+- ❌ Icona home screen non aggiunge valore per uso saltuario
+- ❌ Complessità non giustificata (service worker, caching strategy, update logic)
+
+**Approccio**:
+- TailwindCSS responsive utilities (già in uso)
+- Mobile-first breakpoints (320px-1024px+)
+- Touch-friendly UI (44x44px tap targets)
+- Testing su iOS Safari + Chrome Android
+- Effort: 4-5 giorni vs 5-10 giorni PWA
+
+**Future Path** (se necessario):
+- Responsive web è foundazione per qualsiasi soluzione futura
+- Se serve PWA → Aggiungibile in 1-2 giorni (service worker + manifest)
+- Se serve app nativa → Capacitor (wrappa Vue.js esistente)
+- Ma per ora: **YAGNI** (You Aren't Gonna Need It)
 
 ---
 
@@ -583,9 +847,9 @@ const group = group_title.name; // Usa sempre nome gruppo corrente
 - [ ] Integrazione Jellyfin/Plex API
 
 ### Advanced
-- [ ] Mobile app (React Native?)
 - [ ] Multi-user support con autenticazione
 - [ ] Streaming proxy (per canali con IP whitelist)
+- [ ] Player IPTV integrato nella web app
 
 ---
 
@@ -667,8 +931,9 @@ Vedi [DEPLOYMENT.md](DEPLOYMENT.md) e [QUICKSTART.md](QUICKSTART.md) per dettagl
 - 🗄️ [DATABASE_MANAGEMENT.md](DATABASE_MANAGEMENT.md) - Gestione database
 - 📖 [EPG_MATCHING_GUIDE.md](EPG_MATCHING_GUIDE.md) - Guida EPG matching system
 - 💾 [SUBTITLE_BACKUP.md](SUBTITLE_BACKUP.md) - Sistema backup/restore sottotitoli
+- 🎨 [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) - Documentazione completa Frontend Refactoring v0.9.8
 
 ---
 
-**Ultimo aggiornamento**: 2025-10-22
-**Prossima revisione**: Dopo completamento Fase 5 o Fase 3.2
+**Ultimo aggiornamento**: 2025-10-24 (v0.9.9-dev - Decisione Architetturale: NO PWA, Solo Responsive Web Design)
+**Prossima revisione**: Dopo completamento Fase 9 (Mobile Responsive Design) o Fase 3.2 (Serie TV)
