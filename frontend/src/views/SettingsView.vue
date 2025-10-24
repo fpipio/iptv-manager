@@ -14,25 +14,10 @@
         <div class="border-b border-gray-200">
           <nav class="-mb-px flex space-x-8">
             <button
-              @click="activeTab = 'general'"
+              @click="activeTab = 'channels'"
               :class="[
-                activeTab === 'general'
+                activeTab === 'channels'
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
-              ]"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-              General
-            </button>
-            <button
-              @click="activeTab = 'epg'"
-              :class="[
-                activeTab === 'epg'
-                  ? 'border-purple-500 text-purple-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
                 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
               ]"
@@ -40,7 +25,21 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
-              EPG
+              Channels
+            </button>
+            <button
+              @click="activeTab = 'movies'"
+              :class="[
+                activeTab === 'movies'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+              ]"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>
+              </svg>
+              Movies
             </button>
             <button
               @click="activeTab = 'advanced'"
@@ -60,83 +59,8 @@
         </div>
       </div>
 
-      <!-- General Tab Content -->
-      <div v-if="activeTab === 'general'">
-      <!-- Output Streams Card -->
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 class="text-xl font-semibold mb-4 flex items-center">
-          <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-          </svg>
-          Output Streams
-        </h2>
-        <p class="text-sm text-gray-600 mb-4">
-          Access your IPTV streams and EPG data through these URLs
-        </p>
-
-        <div class="space-y-4">
-          <!-- M3U Playlist -->
-          <div class="border rounded-lg p-4 bg-gray-50">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <h3 class="font-semibold text-gray-900 mb-1 flex items-center">
-                  <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  M3U Playlist
-                </h3>
-                <code class="text-sm text-gray-700 bg-white px-3 py-2 rounded border block break-all">
-                  /output/playlist.m3u
-                </code>
-                <p class="text-xs text-gray-500 mt-2">
-                  Your exported M3U playlist with all enabled channels
-                </p>
-              </div>
-              <button
-                @click="copyToClipboard('/output/playlist.m3u')"
-                class="ml-4 px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 flex-shrink-0"
-                title="Copy to clipboard"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-
-          <!-- EPG XML -->
-          <div class="border rounded-lg p-4 bg-gray-50">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <h3 class="font-semibold text-gray-900 mb-1 flex items-center">
-                  <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  EPG Guide (XMLTV)
-                </h3>
-                <code class="text-sm text-gray-700 bg-white px-3 py-2 rounded border block break-all">
-                  /api/epg/xml
-                </code>
-                <p class="text-xs text-gray-500 mt-2">
-                  Electronic Program Guide in XMLTV format (generated from EPG Matching)
-                </p>
-              </div>
-              <button
-                @click="copyToClipboard('/api/epg/xml')"
-                class="ml-4 px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 flex-shrink-0"
-                title="Copy to clipboard"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p class="text-xs text-yellow-800">
-            <strong>Note:</strong> Replace <code class="bg-yellow-100 px-1 rounded">localhost:3000</code> with your server's IP address when accessing from other devices on your network.
-          </p>
-        </div>
-      </div>
-
+      <!-- Movies Tab Content -->
+      <div v-if="activeTab === 'movies'">
       <!-- Integrations Card -->
       <div class="bg-white rounded-lg shadow p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4 flex items-center">
@@ -213,8 +137,8 @@
       </div>
       </div>
 
-      <!-- EPG Tab Content -->
-      <div v-if="activeTab === 'epg'">
+      <!-- Channels Tab Content -->
+      <div v-if="activeTab === 'channels'">
       <!-- EPG Info Card -->
       <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow p-6 mb-6">
         <div class="flex items-start">
@@ -243,81 +167,6 @@
               The EPG Matching page allows you to map your channels to these sources for automatic program guide updates.
             </p>
           </div>
-        </div>
-      </div>
-
-      <!-- Output Streams Card -->
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 class="text-xl font-semibold mb-4 flex items-center">
-          <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-          </svg>
-          Output Streams
-        </h2>
-        <p class="text-sm text-gray-600 mb-4">
-          Access your IPTV streams and EPG data through these URLs
-        </p>
-
-        <div class="space-y-4">
-          <!-- M3U Playlist -->
-          <div class="border rounded-lg p-4 bg-gray-50">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <h3 class="font-semibold text-gray-900 mb-1 flex items-center">
-                  <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  M3U Playlist
-                </h3>
-                <code class="text-sm text-gray-700 bg-white px-3 py-2 rounded border block break-all">
-                  /output/playlist.m3u
-                </code>
-                <p class="text-xs text-gray-500 mt-2">
-                  Your exported M3U playlist with all enabled channels
-                </p>
-              </div>
-              <button
-                @click="copyToClipboard('/output/playlist.m3u')"
-                class="ml-4 px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 flex-shrink-0"
-                title="Copy to clipboard"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-
-          <!-- EPG XML -->
-          <div class="border rounded-lg p-4 bg-gray-50">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <h3 class="font-semibold text-gray-900 mb-1 flex items-center">
-                  <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  EPG Guide (XMLTV)
-                </h3>
-                <code class="text-sm text-gray-700 bg-white px-3 py-2 rounded border block break-all">
-                  /api/epg/xml
-                </code>
-                <p class="text-xs text-gray-500 mt-2">
-                  Electronic Program Guide in XMLTV format (generated from EPG Matching)
-                </p>
-              </div>
-              <button
-                @click="copyToClipboard('/api/epg/xml')"
-                class="ml-4 px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 flex-shrink-0"
-                title="Copy to clipboard"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p class="text-xs text-yellow-800">
-            <strong>Note:</strong> Replace <code class="bg-yellow-100 px-1 rounded">localhost:3000</code> with your server's IP address when accessing from other devices on your network.
-          </p>
         </div>
       </div>
 
@@ -667,7 +516,7 @@ export default {
   },
   data() {
     return {
-      activeTab: 'general', // 'general', 'epg', or 'advanced'
+      activeTab: 'channels', // 'channels', 'movies', or 'advanced'
       sources: [],
       config: {
         grab_days: '3',

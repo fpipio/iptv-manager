@@ -7,20 +7,6 @@
       <div class="border-b border-gray-200">
         <nav class="-mb-px flex space-x-8">
           <button
-            @click="activeTab = 'import'"
-            :class="[
-              activeTab === 'import'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-              'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-            </svg>
-            Import
-          </button>
-          <button
             @click="activeTab = 'manage'"
             :class="[
               activeTab === 'manage'
@@ -35,9 +21,9 @@
             Manage
           </button>
           <button
-            @click="activeTab = 'epg-matching'"
+            @click="activeTab = 'epg'"
             :class="[
-              activeTab === 'epg-matching'
+              activeTab === 'epg'
                 ? 'border-purple-500 text-purple-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
               'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
@@ -46,21 +32,21 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
-            EPG Matching
+            EPG
           </button>
           <button
-            @click="activeTab = 'export'"
+            @click="activeTab = 'import-export'"
             :class="[
-              activeTab === 'export'
+              activeTab === 'import-export'
                 ? 'border-orange-500 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
               'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
             ]"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
             </svg>
-            Export
+            Import & Export
           </button>
         </nav>
       </div>
@@ -68,20 +54,18 @@
 
     <!-- Tab Content -->
     <div class="bg-white shadow rounded-lg p-6">
-      <ChannelsImportTab v-if="activeTab === 'import'" />
       <ChannelsManageTab v-if="activeTab === 'manage'" />
-      <ChannelsEpgMatchingTab v-if="activeTab === 'epg-matching'" />
-      <ChannelsExportTab v-if="activeTab === 'export'" />
+      <ChannelsEpgMatchingTab v-if="activeTab === 'epg'" />
+      <ChannelsImportExportTab v-if="activeTab === 'import-export'" />
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import ChannelsImportTab from '../components/channels/ChannelsImportTab.vue'
 import ChannelsManageTab from '../components/channels/ChannelsManageTab.vue'
 import ChannelsEpgMatchingTab from '../components/channels/ChannelsEpgMatchingTab.vue'
-import ChannelsExportTab from '../components/channels/ChannelsExportTab.vue'
+import ChannelsImportExportTab from '../components/channels/ChannelsImportExportTab.vue'
 
-const activeTab = ref('import')
+const activeTab = ref('manage')
 </script>

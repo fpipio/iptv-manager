@@ -24,9 +24,9 @@
 
 **Ultimo Aggiornamento**: 2025-10-24
 
-**Versione Corrente**: v0.9.9-dev
+**Versione Corrente**: v0.9.10-dev
 
-**Fase Corrente**: ✅ **Fase 5 (Parziale)** + **Frontend Refactoring** + **Auto-Export M3U** + **EPG Alignment** - Ricerca Canali + Import Asincrono + Movie Cleanup + Multi-Library + Emby + Subtitle Backup + NFS Cache Fix + Tab-Based Navigation + Export Automatico + EPG=Playlist Sync Implementati
+**Fase Corrente**: ✅ **Fase 5 (Parziale)** + **Frontend Refactoring** + **Auto-Export M3U** + **EPG Alignment** + **UI Reorganization** - Ricerca Canali + Import Asincrono + Movie Cleanup + Multi-Library + Emby + Subtitle Backup + NFS Cache Fix + Tab-Based Navigation + Export Automatico + EPG=Playlist Sync + UI Simplification Implementati
 
 **Prossima Fase**: Fase 9 (Mobile Responsive Design) o Fase 3.2 (Serie TV)
 
@@ -47,6 +47,7 @@
 - ✅ **🔄 Auto-Export M3U** (rigenerazione automatica playlist dopo ogni modifica canali/gruppi, sempre aggiornata)
 - ✅ **📡 Export Tab in Channels** (URL playlist, statistiche real-time, download, force regenerate - spostato da Settings)
 - ✅ **🔗 EPG Matching = Playlist Alignment** (EPG matching mostra solo canali esportati, manual mappings preservati)
+- ✅ **🎯 UI Reorganization** (Channels: 3 tab Manage|EPG|Import&Export; Movies: 4 tab riordinati; Settings: 3 tab Channels|Movies|Advanced senza Output Streams)
 - ✅ **Danger Zone centralizzata** (reset granulare TV/Movies in Settings > Advanced tab)
 - ✅ Container Docker con production deployment funzionante
 - ✅ Keep-alive routing per navigazione istantanea
@@ -279,39 +280,48 @@
 Import | Manage | Movies | Export | Settings | EPG Matching
 ```
 
-**✅ DOPO** (Feature-Based - 3 aree):
+**✅ DOPO Fase 5.5** (Feature-Based - 3 aree):
 ```
 📺 Channels          🎬 Movies           ⚙️ Settings
 ├─ Import            ├─ Import           ├─ General
 ├─ Manage            ├─ Library          ├─ EPG
-└─ EPG Matching      ├─ Cleanup          └─ Advanced (Danger Zone)
-                     └─ Year Organization
+├─ EPG Matching      ├─ Cleanup          └─ Advanced (Danger Zone)
+└─ Export            └─ Year Organization
 ```
 
-#### **Modifiche Implementate**
+**✅ DOPO Fase 5.8** (UI Reorganization - ottimizzato):
+```
+📺 Channels             🎬 Movies              ⚙️ Settings
+├─ Manage               ├─ Library             ├─ Channels (EPG config)
+├─ EPG                  ├─ Cleanup             ├─ Movies (Integrations)
+└─ Import & Export      ├─ Year Organization   └─ Advanced (Danger Zone)
+                        └─ Import
+```
+
+#### **Modifiche Implementate** (Fase 5.5 - successivamente ottimizzato in Fase 5.8)
 1. **Channels Area** (`ChannelsView.vue`):
-   - 3 tabs: Import, Manage, EPG Matching
-   - Componenti estratti: `ChannelsImportTab.vue`, `ChannelsManageTab.vue`, `ChannelsEpgMatchingTab.vue`
+   - 4 tabs: Import, Manage, EPG Matching, Export (→ ottimizzato a 3 tab in Fase 5.8)
+   - Componenti estratti: `ChannelsImportTab.vue`, `ChannelsManageTab.vue`, `ChannelsEpgMatchingTab.vue`, `ChannelsExportTab.vue`
    - Import M3U dual-tab (TV/Movies) con gestione duplicati tvg-id
 
 2. **Movies Area** (`MoviesView.vue`):
-   - 4 tabs: Import, Library, Cleanup, Year Organization
+   - 4 tabs: Import, Library, Cleanup, Year Organization (→ riordinati in Fase 5.8: Library primo)
    - Tab Import: Import M3U dedicato per film
    - Tab Library: Gestione libreria + STRM Output Directory + Emby Integration condizionale
    - Tab Cleanup: Sistema pulizia nomi attori (già esistente)
    - Tab Year Organization: Organizzazione multi-library per anno (già esistente)
 
 3. **Settings Area** (`SettingsView.vue`):
-   - 3 tabs: General, EPG, Advanced
-   - **General Tab**:
-     - Output Streams (M3U playlist URL, EPG XML URL)
-     - Export M3U Playlist (generazione, preview, download)
-     - Integrations (Emby toggle + configurazione)
-   - **EPG Tab**:
+   - 3 tabs: General, EPG, Advanced (→ rinominati in Fase 5.8: Channels, Movies, Advanced)
+   - **General Tab** (→ rinominato Channels in Fase 5.8, Output Streams rimosso):
+     - Output Streams (M3U playlist URL, EPG XML URL) → RIMOSSO in Fase 5.8
+     - Export M3U Playlist (generazione, preview, download) → spostato in Channels > Export in Fase 5.8
+     - Integrations (Emby toggle + configurazione) → spostato in Movies tab in Fase 5.8
+   - **EPG Tab** (→ unito in Channels tab in Fase 5.8):
      - EPG Sources management
      - EPG Configuration (grab days, connections)
      - EPG Status monitoring
-   - **Advanced Tab**:
+   - **Advanced Tab** (→ invariato):
      - Danger Zone (reset TV channels, groups, EPG, movies, everything)
 
 4. **Database Migration 014**:
@@ -591,6 +601,162 @@ WHERE custom_group_id IS NOT NULL;
 - ✅ Manual mapping: preservato dopo deselect/reselect gruppo
 - ✅ Playlist M3U: allineata con EPG Matching (stesso contenuto)
 - ✅ Data migration: 735 canali sincronizzati con successo
+
+### **Fase 5.8** - UI Reorganization & Simplification (100%) 🆕
+
+**🎯 Riorganizzazione completa interfaccia utente** per workflow più intuitivo e user mental model migliorato
+
+#### **Problema risolto**
+- **Navigazione confusa**: 4 tab in Channels (Import, Manage, EPG Matching, Export) + Output Streams duplicato in Settings
+- **Mental model poco chiaro**: Export era sia in Channels che in Settings, creando confusione
+- **Settings sovraccarico**: Tab General conteneva Output Streams non pertinenti alle impostazioni
+
+#### **Soluzione implementata**
+
+**1. Channels - 3 Tab Logici** (era 4 tab):
+```
+📺 Channels
+├─ Manage (verde)           ← invariato
+├─ EPG (viola)              ← rinominato da "EPG Matching"
+└─ Import & Export (arancione)  ← NUOVO: unisce Import + Export + EPG URLs
+   ├─ Import M3U (Upload/URL)
+   ├─ Export M3U (Playlist URL, stats, download)
+   └─ EPG Guide (EPG URL, Grab EPG Data button)
+```
+
+**2. Movies - 4 Tab Riordinati** (era Import prima):
+```
+🎬 Movies
+├─ Library (verde)          ← primo tab (workflow naturale: browse → cleanup → organize → import)
+├─ Cleanup (arancione)      ← invariato
+├─ Year Organization (viola) ← invariato
+└─ Import (blu)             ← spostato alla fine (import = input iniziale o refresh periodico)
+```
+
+**3. Settings - 3 Tab Ripuliti** (rimosso Output Streams):
+```
+⚙️ Settings
+├─ Channels (blu)           ← era "General", ora solo EPG config
+│  ├─ EPG Sources Info
+│  ├─ EPG Configuration (grab days, connections)
+│  ├─ EPG Sources List
+│  └─ EPG Status
+├─ Movies (viola)           ← era parte di "General", ora dedicato
+│  └─ Integrations (Emby toggle + config)
+└─ Advanced (rosso)         ← invariato
+   └─ Danger Zone (reset TV/Movies/All)
+```
+
+#### **Modifiche implementate**
+
+**Frontend Components**:
+1. **Nuovo componente** `ChannelsImportExportTab.vue` (670 righe):
+   - Sezione Import: Upload file + URL con progress bar
+   - Sezione Export: Playlist URL, statistiche (groups/channels/size), download, force regenerate
+   - Sezione EPG: EPG URL, pulsante "Grab EPG Data" (duplicato da EPG tab per convenience)
+   - Toast notifications unificate
+
+2. **Aggiornato** `ChannelsView.vue`:
+   - 3 tab: Manage, EPG, Import & Export
+   - Default tab: `manage` (era `import`)
+   - Import componenti: `ChannelsImportExportTab.vue`
+
+3. **Aggiornato** `MoviesView.vue`:
+   - Tab riordinati: Library, Cleanup, Year Organization, Import
+   - Default tab: `library` (era `import`)
+
+4. **Aggiornato** `SettingsView.vue`:
+   - Tab rinominati: Channels (era General), Movies (era EPG), Advanced
+   - Default tab: `channels` (era `general`)
+   - **Rimosso completamente** Output Streams (era duplicato in General + EPG tab)
+
+5. **Eliminati componenti legacy**:
+   - `ChannelsImportTab.vue` (sostituito da sezione in ChannelsImportExportTab)
+   - `ChannelsExportTab.vue` (sostituito da sezione in ChannelsImportExportTab)
+
+#### **Architectural Decision**
+
+**Decisione**: Import & Export uniti in un unico tab con sezioni separate + EPG URLs per convenience
+
+**Motivazione**:
+- ✅ **Workflow logico**: Import → Manage → EPG → Export è un flusso sequenziale naturale
+- ✅ **User mental model**: Import + Export sono due facce della stessa medaglia (input/output dati)
+- ✅ **EPG convenience**: URL EPG accessibile sia da tab EPG che da tab Import & Export (uso comune insieme a playlist M3U)
+- ✅ **Settings cleanup**: Settings contiene solo configurazioni, non output URLs
+- ✅ **Zero duplicazione**: Output Streams rimosso completamente da Settings
+- ✅ **Scalabilità**: Pronto per future features (es. Export presets, multiple playlists)
+
+**Strategia rifiutata**:
+- ❌ Tab separati Import/Export: Troppo granulare, 4 tab erano confusi
+- ❌ Output Streams in Settings: Non è una "impostazione", è un output operativo
+- ❌ Import come primo tab: Workflow inizia con browse esistente, non import
+
+#### **Benefits**
+
+1. **UX migliorata**:
+   - Navigazione più intuitiva (3 tab invece di 4)
+   - Mental model chiaro (Input/Output uniti)
+   - EPG URLs accessibili da due punti (tab EPG + tab Import & Export)
+   - Movies workflow naturale (browse → organize → import)
+
+2. **Settings più focalizzati**:
+   - Channels tab: solo configurazione EPG
+   - Movies tab: solo integrazioni (Emby)
+   - Advanced tab: solo azioni pericolose
+   - Zero output URLs (spostati dove appartengono)
+
+3. **Manutenibilità**:
+   - Meno componenti duplicati (-2 file)
+   - Logica unificata Import/Export in un componente
+   - Routing semplificato (3 aree principali)
+
+4. **Backward Compatibility**:
+   - Zero breaking changes backend
+   - Frontend routing preservato (activeTab gestito internamente)
+   - Docker deployment senza modifiche
+
+#### **Component Organization**
+
+**Prima** (6 componenti):
+```
+components/channels/
+├── ChannelsImportTab.vue
+├── ChannelsManageTab.vue
+├── ChannelsEpgMatchingTab.vue
+└── ChannelsExportTab.vue
+```
+
+**Dopo** (4 componenti):
+```
+components/channels/
+├── ChannelsManageTab.vue
+├── ChannelsEpgMatchingTab.vue
+└── ChannelsImportExportTab.vue  ← NUOVO: unisce Import + Export + EPG URLs
+```
+
+#### **File Changes**
+
+- ✅ **Nuovo**: `frontend/src/components/channels/ChannelsImportExportTab.vue` (670 righe)
+- ✅ **Modificato**: `frontend/src/views/ChannelsView.vue` (3 tab, default `manage`)
+- ✅ **Modificato**: `frontend/src/views/MoviesView.vue` (tab riordinati, default `library`)
+- ✅ **Modificato**: `frontend/src/views/SettingsView.vue` (tab rinominati, Output Streams rimosso)
+- ❌ **Eliminato**: Logica duplicata Output Streams in Settings
+
+#### **Testing**
+
+- ✅ Build frontend: `npm run build` completato (3.10s)
+- ✅ Docker rebuild: container ricompilato con nuovo frontend
+- ✅ Navigazione tab: tutti i tab funzionanti
+- ✅ Import & Export: funzionalità preservate
+- ✅ EPG URLs: accessibili da due posizioni
+- ✅ Settings: solo configurazioni, zero output URLs
+
+#### **Docker Deployment**
+
+- ✅ Frontend compilato e deployato su porta 3000
+- ✅ Container riavviato con nuovo frontend build
+- ✅ Zero modifiche backend richieste
+- ✅ Zero modifiche database richieste
 
 ---
 
@@ -1150,5 +1316,5 @@ Vedi [DEPLOYMENT.md](DEPLOYMENT.md) e [QUICKSTART.md](QUICKSTART.md) per dettagl
 
 ---
 
-**Ultimo aggiornamento**: 2025-10-24 (v0.9.9-dev - Decisione Architetturale: NO PWA, Solo Responsive Web Design)
+**Ultimo aggiornamento**: 2025-10-24 (v0.9.10-dev - Fase 5.8: UI Reorganization & Simplification completata)
 **Prossima revisione**: Dopo completamento Fase 9 (Mobile Responsive Design) o Fase 3.2 (Serie TV)
