@@ -137,84 +137,6 @@
         </div>
       </div>
 
-      <!-- Export M3U Card -->
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 class="text-xl font-semibold mb-4 flex items-center">
-          <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-          </svg>
-          Export M3U Playlist
-        </h2>
-        <p class="text-sm text-gray-600 mb-4">
-          Generate your M3U playlist file with all selected channels and groups.
-        </p>
-
-        <button
-          @click="generateExport"
-          :disabled="exporting"
-          class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed mb-4"
-        >
-          {{ exporting ? 'Generating...' : 'Generate M3U File' }}
-        </button>
-
-        <!-- Success message -->
-        <div v-if="exportResult" class="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
-          <h3 class="font-medium text-green-900 mb-2">Export Successful!</h3>
-          <p class="text-sm text-green-800 mb-3">
-            {{ exportResult.message }}
-          </p>
-          <div class="text-sm text-green-800 mb-3">
-            <p>Groups: {{ exportResult.stats.groups }}</p>
-            <p>Channels: {{ exportResult.stats.channels }}</p>
-          </div>
-          <div class="space-y-2">
-            <a
-              :href="exportResult.filePath"
-              download
-              class="inline-block w-full text-center bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            >
-              Download M3U File
-            </a>
-            <div class="bg-white rounded border border-green-300 p-3">
-              <p class="text-xs text-gray-600 mb-1">Direct URL:</p>
-              <code class="text-xs text-gray-900 break-all">{{ getFullUrl(exportResult.filePath) }}</code>
-            </div>
-          </div>
-        </div>
-
-        <!-- Error message -->
-        <div v-if="exportError" class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-          <h3 class="font-medium text-red-900 mb-2">Export Failed</h3>
-          <p class="text-sm text-red-800">{{ exportError }}</p>
-        </div>
-
-        <!-- Preview section -->
-        <div class="mt-4">
-          <button
-            @click="loadPreview"
-            :disabled="loadingPreview"
-            class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {{ loadingPreview ? 'Loading...' : 'Preview M3U Content' }}
-          </button>
-
-          <div v-if="previewContent" class="mt-4">
-            <div class="bg-gray-50 rounded-md p-4 border border-gray-300">
-              <div class="flex justify-between items-center mb-2">
-                <h4 class="font-medium text-gray-900">Preview</h4>
-                <button
-                  @click="previewContent = null"
-                  class="text-gray-600 hover:text-gray-800"
-                >
-                  Close
-                </button>
-              </div>
-              <pre class="text-xs text-gray-800 overflow-x-auto whitespace-pre-wrap max-h-96 overflow-y-auto">{{ previewContent }}</pre>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Integrations Card -->
       <div class="bg-white rounded-lg shadow p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4 flex items-center">
@@ -759,12 +681,6 @@ export default {
         siteUrl: '',
         enabled: true
       },
-      // Export M3U
-      exporting: false,
-      exportResult: null,
-      exportError: null,
-      loadingPreview: false,
-      previewContent: null,
       // Danger Zone
       resetting: false,
       resetStatusMessage: '',
@@ -915,40 +831,6 @@ export default {
       if (!dateStr) return 'N/A';
       const date = new Date(dateStr);
       return date.toLocaleString();
-    },
-    // Export M3U methods
-    async generateExport() {
-      this.exporting = true;
-      this.exportResult = null;
-      this.exportError = null;
-
-      try {
-        const response = await axios.post('/api/export');
-        this.exportResult = response.data;
-        this.addToast('M3U file generated successfully', 'success');
-      } catch (error) {
-        this.exportError = error.response?.data?.error || 'Export failed';
-        this.addToast('Failed to generate M3U file', 'error');
-      } finally {
-        this.exporting = false;
-      }
-    },
-    async loadPreview() {
-      this.loadingPreview = true;
-      this.previewContent = null;
-
-      try {
-        const response = await axios.get('/api/export/preview');
-        this.previewContent = response.data.content;
-      } catch (error) {
-        console.error('Preview failed:', error);
-        this.addToast('Failed to load preview', 'error');
-      } finally {
-        this.loadingPreview = false;
-      }
-    },
-    getFullUrl(path) {
-      return window.location.origin + path;
     },
     // Danger Zone methods
     async resetChannels() {
