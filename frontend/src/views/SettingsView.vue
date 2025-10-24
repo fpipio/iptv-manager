@@ -3,12 +3,296 @@
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Settings</h1>
+        <h1 class="text-3xl font-bold text-gray-900">⚙️ Settings</h1>
         <p class="mt-2 text-gray-600">
           Configure IPTV Manager settings and EPG sources
         </p>
       </div>
 
+      <!-- Tabs Navigation -->
+      <div class="mb-6">
+        <div class="border-b border-gray-200">
+          <nav class="-mb-px flex space-x-8">
+            <button
+              @click="activeTab = 'general'"
+              :class="[
+                activeTab === 'general'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+              ]"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              General
+            </button>
+            <button
+              @click="activeTab = 'epg'"
+              :class="[
+                activeTab === 'epg'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+              ]"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              EPG
+            </button>
+            <button
+              @click="activeTab = 'advanced'"
+              :class="[
+                activeTab === 'advanced'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+              ]"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+              Advanced
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- General Tab Content -->
+      <div v-if="activeTab === 'general'">
+      <!-- Output Streams Card -->
+      <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4 flex items-center">
+          <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+          </svg>
+          Output Streams
+        </h2>
+        <p class="text-sm text-gray-600 mb-4">
+          Access your IPTV streams and EPG data through these URLs
+        </p>
+
+        <div class="space-y-4">
+          <!-- M3U Playlist -->
+          <div class="border rounded-lg p-4 bg-gray-50">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <h3 class="font-semibold text-gray-900 mb-1 flex items-center">
+                  <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  M3U Playlist
+                </h3>
+                <code class="text-sm text-gray-700 bg-white px-3 py-2 rounded border block break-all">
+                  /output/playlist.m3u
+                </code>
+                <p class="text-xs text-gray-500 mt-2">
+                  Your exported M3U playlist with all enabled channels
+                </p>
+              </div>
+              <button
+                @click="copyToClipboard('/output/playlist.m3u')"
+                class="ml-4 px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 flex-shrink-0"
+                title="Copy to clipboard"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- EPG XML -->
+          <div class="border rounded-lg p-4 bg-gray-50">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <h3 class="font-semibold text-gray-900 mb-1 flex items-center">
+                  <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  EPG Guide (XMLTV)
+                </h3>
+                <code class="text-sm text-gray-700 bg-white px-3 py-2 rounded border block break-all">
+                  /api/epg/xml
+                </code>
+                <p class="text-xs text-gray-500 mt-2">
+                  Electronic Program Guide in XMLTV format (generated from EPG Matching)
+                </p>
+              </div>
+              <button
+                @click="copyToClipboard('/api/epg/xml')"
+                class="ml-4 px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 flex-shrink-0"
+                title="Copy to clipboard"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p class="text-xs text-yellow-800">
+            <strong>Note:</strong> Replace <code class="bg-yellow-100 px-1 rounded">localhost:3000</code> with your server's IP address when accessing from other devices on your network.
+          </p>
+        </div>
+      </div>
+
+      <!-- Export M3U Card -->
+      <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4 flex items-center">
+          <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+          </svg>
+          Export M3U Playlist
+        </h2>
+        <p class="text-sm text-gray-600 mb-4">
+          Generate your M3U playlist file with all selected channels and groups.
+        </p>
+
+        <button
+          @click="generateExport"
+          :disabled="exporting"
+          class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed mb-4"
+        >
+          {{ exporting ? 'Generating...' : 'Generate M3U File' }}
+        </button>
+
+        <!-- Success message -->
+        <div v-if="exportResult" class="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
+          <h3 class="font-medium text-green-900 mb-2">Export Successful!</h3>
+          <p class="text-sm text-green-800 mb-3">
+            {{ exportResult.message }}
+          </p>
+          <div class="text-sm text-green-800 mb-3">
+            <p>Groups: {{ exportResult.stats.groups }}</p>
+            <p>Channels: {{ exportResult.stats.channels }}</p>
+          </div>
+          <div class="space-y-2">
+            <a
+              :href="exportResult.filePath"
+              download
+              class="inline-block w-full text-center bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+            >
+              Download M3U File
+            </a>
+            <div class="bg-white rounded border border-green-300 p-3">
+              <p class="text-xs text-gray-600 mb-1">Direct URL:</p>
+              <code class="text-xs text-gray-900 break-all">{{ getFullUrl(exportResult.filePath) }}</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error message -->
+        <div v-if="exportError" class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+          <h3 class="font-medium text-red-900 mb-2">Export Failed</h3>
+          <p class="text-sm text-red-800">{{ exportError }}</p>
+        </div>
+
+        <!-- Preview section -->
+        <div class="mt-4">
+          <button
+            @click="loadPreview"
+            :disabled="loadingPreview"
+            class="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {{ loadingPreview ? 'Loading...' : 'Preview M3U Content' }}
+          </button>
+
+          <div v-if="previewContent" class="mt-4">
+            <div class="bg-gray-50 rounded-md p-4 border border-gray-300">
+              <div class="flex justify-between items-center mb-2">
+                <h4 class="font-medium text-gray-900">Preview</h4>
+                <button
+                  @click="previewContent = null"
+                  class="text-gray-600 hover:text-gray-800"
+                >
+                  Close
+                </button>
+              </div>
+              <pre class="text-xs text-gray-800 overflow-x-auto whitespace-pre-wrap max-h-96 overflow-y-auto">{{ previewContent }}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Integrations Card -->
+      <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4 flex items-center">
+          <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path>
+          </svg>
+          Integrations
+        </h2>
+        <p class="text-sm text-gray-600 mb-4">
+          Configure external service integrations
+        </p>
+
+        <!-- Emby Integration -->
+        <div class="border rounded-lg p-4 bg-gray-50">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>
+              </svg>
+              <div>
+                <h3 class="font-semibold text-gray-900">Emby Media Server</h3>
+                <p class="text-xs text-gray-500">Automatically refresh libraries after STRM file changes</p>
+              </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                v-model="embyEnabled"
+                @change="toggleEmbyIntegration"
+                class="sr-only peer"
+              />
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <span class="ml-3 text-sm font-medium text-gray-700">{{ embyEnabled ? 'Enabled' : 'Disabled' }}</span>
+            </label>
+          </div>
+
+          <!-- Emby Config (shown only when enabled) -->
+          <div v-if="embyEnabled" class="mt-4 space-y-3 pl-11">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Server URL
+              </label>
+              <input
+                v-model="embyConfig.serverUrl"
+                type="url"
+                placeholder="http://localhost:8096"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                API Token
+              </label>
+              <input
+                v-model="embyConfig.apiToken"
+                type="password"
+                placeholder="Your Emby API Token"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
+            <button
+              @click="saveEmbyConfig"
+              :disabled="isSavingEmby || !embyConfig.serverUrl || !embyConfig.apiToken"
+              class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+            >
+              <svg v-if="isSavingEmby" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ isSavingEmby ? 'Saving...' : 'Save Configuration' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- EPG Tab Content -->
+      <div v-if="activeTab === 'epg'">
       <!-- EPG Info Card -->
       <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow p-6 mb-6">
         <div class="flex items-start">
@@ -267,6 +551,116 @@
           </div>
         </div>
       </div>
+      </div>
+      <!-- End EPG Tab Content -->
+
+      <!-- Advanced Tab Content -->
+      <div v-if="activeTab === 'advanced'">
+        <!-- Danger Zone Card -->
+        <div class="bg-red-50 border-2 border-red-300 rounded-lg shadow p-6 mb-6">
+          <h2 class="text-2xl font-semibold text-red-600 mb-2 flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            Danger Zone
+          </h2>
+          <p class="text-sm text-red-700 mb-6">
+            These actions will permanently delete data from the database. <strong>These actions cannot be undone!</strong>
+          </p>
+
+          <div class="space-y-4">
+            <!-- TV Channels Section -->
+            <div class="bg-white rounded-lg p-4 border border-red-200">
+              <h3 class="font-semibold text-gray-900 mb-3">📺 TV Channels Data</h3>
+              <div class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <button
+                    @click="resetChannels"
+                    :disabled="resetting"
+                    class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+                  >
+                    {{ resetting ? 'Resetting...' : 'Reset Channels Only' }}
+                  </button>
+                  <span class="text-sm text-gray-600">Delete all channels and EPG mappings (keep groups)</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <button
+                    @click="resetGroups"
+                    :disabled="resetting"
+                    class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+                  >
+                    {{ resetting ? 'Resetting...' : 'Reset Groups Only' }}
+                  </button>
+                  <span class="text-sm text-gray-600">Delete all groups (except Unassigned), move channels to Unassigned</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <button
+                    @click="resetEpgMappings"
+                    :disabled="resetting"
+                    class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+                  >
+                    {{ resetting ? 'Resetting...' : 'Reset EPG Mappings Only' }}
+                  </button>
+                  <span class="text-sm text-gray-600">Delete all EPG mappings (keep channels and groups)</span>
+                </div>
+                <div class="border-t pt-3 mt-3"></div>
+                <div class="flex items-center gap-3">
+                  <button
+                    @click="resetAllTvData"
+                    :disabled="resetting"
+                    class="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 disabled:bg-gray-300 disabled:cursor-not-allowed font-bold text-sm"
+                  >
+                    {{ resetting ? 'Resetting...' : 'Reset All TV Data' }}
+                  </button>
+                  <span class="text-sm text-red-600 font-semibold">⚠️ Delete ALL TV data: channels, groups, and EPG mappings (movies NOT affected)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Movies Section -->
+            <div class="bg-white rounded-lg p-4 border border-red-200">
+              <h3 class="font-semibold text-gray-900 mb-3">🎬 Movies Data</h3>
+              <div class="flex items-center gap-3">
+                <button
+                  @click="resetMovies"
+                  :disabled="resetting"
+                  class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+                >
+                  {{ resetting ? 'Resetting...' : 'Reset All Movies' }}
+                </button>
+                <span class="text-sm text-gray-600">Delete all movies and STRM files (TV channels NOT affected)</span>
+              </div>
+            </div>
+
+            <!-- Nuclear Option -->
+            <div class="bg-red-100 rounded-lg p-4 border-2 border-red-400">
+              <h3 class="font-bold text-red-900 mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                🚨 Nuclear Option
+              </h3>
+              <div class="flex items-center gap-3">
+                <button
+                  @click="resetAll"
+                  :disabled="resetting"
+                  class="px-4 py-2 bg-red-900 text-white rounded-md hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed font-bold text-sm"
+                >
+                  {{ resetting ? 'Resetting...' : 'Reset EVERYTHING' }}
+                </button>
+                <span class="text-sm text-red-900 font-bold">⚠️ DELETE EVERYTHING: All channels, groups, movies, STRM files, and EPG mappings</span>
+              </div>
+            </div>
+
+            <!-- Status message -->
+            <div v-if="resetStatusMessage" :class="resetStatusType === 'success' ? 'bg-green-50 text-green-800 border-green-200' : 'bg-red-50 text-red-800 border-red-200'" class="p-4 rounded-md border">
+              <p class="font-medium">{{ resetStatusMessage }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End Advanced Tab Content -->
+
     </div>
 
     <!-- Add/Edit Source Modal -->
@@ -351,6 +745,7 @@ export default {
   },
   data() {
     return {
+      activeTab: 'general', // 'general', 'epg', or 'advanced'
       sources: [],
       config: {
         grab_days: '3',
@@ -363,7 +758,24 @@ export default {
         siteName: '',
         siteUrl: '',
         enabled: true
-      }
+      },
+      // Export M3U
+      exporting: false,
+      exportResult: null,
+      exportError: null,
+      loadingPreview: false,
+      previewContent: null,
+      // Danger Zone
+      resetting: false,
+      resetStatusMessage: '',
+      resetStatusType: '',
+      // Emby Integration
+      embyEnabled: false,
+      embyConfig: {
+        serverUrl: '',
+        apiToken: ''
+      },
+      isSavingEmby: false
     };
   },
   mounted() {
@@ -372,16 +784,27 @@ export default {
   methods: {
     async loadData() {
       try {
-        const [sourcesRes, configRes, statusRes] = await Promise.all([
+        const [sourcesRes, configRes, statusRes, embyRes] = await Promise.all([
           axios.get('/api/epg/sources'),
           axios.get('/api/epg/config'),
-          axios.get('/api/epg/status')
+          axios.get('/api/epg/status'),
+          axios.get('/api/movies/emby-config')
         ]);
 
         // Sort sources by priority (1 = highest = first)
         this.sources = sourcesRes.data.sort((a, b) => (a.priority || 999) - (b.priority || 999));
         this.config = configRes.data;
         this.status = statusRes.data;
+
+        // Load Emby config
+        if (embyRes.data.data) {
+          this.embyConfig = {
+            serverUrl: embyRes.data.data.emby_server_url || '',
+            apiToken: embyRes.data.data.emby_api_token || ''
+          };
+          // Load emby_enabled flag from database
+          this.embyEnabled = embyRes.data.data.emby_enabled === true;
+        }
       } catch (error) {
         console.error('Error loading settings data:', error);
         this.addToast('Failed to load settings data', 'error');
@@ -492,6 +915,242 @@ export default {
       if (!dateStr) return 'N/A';
       const date = new Date(dateStr);
       return date.toLocaleString();
+    },
+    // Export M3U methods
+    async generateExport() {
+      this.exporting = true;
+      this.exportResult = null;
+      this.exportError = null;
+
+      try {
+        const response = await axios.post('/api/export');
+        this.exportResult = response.data;
+        this.addToast('M3U file generated successfully', 'success');
+      } catch (error) {
+        this.exportError = error.response?.data?.error || 'Export failed';
+        this.addToast('Failed to generate M3U file', 'error');
+      } finally {
+        this.exporting = false;
+      }
+    },
+    async loadPreview() {
+      this.loadingPreview = true;
+      this.previewContent = null;
+
+      try {
+        const response = await axios.get('/api/export/preview');
+        this.previewContent = response.data.content;
+      } catch (error) {
+        console.error('Preview failed:', error);
+        this.addToast('Failed to load preview', 'error');
+      } finally {
+        this.loadingPreview = false;
+      }
+    },
+    getFullUrl(path) {
+      return window.location.origin + path;
+    },
+    // Danger Zone methods
+    async resetChannels() {
+      if (!confirm('⚠️ WARNING: This will delete ALL channels and EPG mappings!\n\nGroups will be preserved.\n\nAre you sure?')) {
+        return;
+      }
+
+      this.resetting = true;
+      this.resetStatusMessage = '';
+
+      try {
+        const response = await axios.post('/api/channels/reset/all');
+        this.resetStatusType = 'success';
+        this.resetStatusMessage = response.data.message;
+        this.addToast('Channels reset successfully', 'success');
+      } catch (error) {
+        this.resetStatusType = 'error';
+        this.resetStatusMessage = error.response?.data?.error || 'Reset failed';
+        this.addToast('Failed to reset channels', 'error');
+      } finally {
+        this.resetting = false;
+      }
+    },
+    async resetGroups() {
+      if (!confirm('⚠️ WARNING: This will delete ALL groups (except Unassigned)!\n\nAll channels will be moved to Unassigned group.\n\nAre you sure?')) {
+        return;
+      }
+
+      this.resetting = true;
+      this.resetStatusMessage = '';
+
+      try {
+        const response = await axios.post('/api/groups/reset/all');
+        this.resetStatusType = 'success';
+        this.resetStatusMessage = response.data.message;
+        this.addToast('Groups reset successfully', 'success');
+      } catch (error) {
+        this.resetStatusType = 'error';
+        this.resetStatusMessage = error.response?.data?.error || 'Reset failed';
+        this.addToast('Failed to reset groups', 'error');
+      } finally {
+        this.resetting = false;
+      }
+    },
+    async resetEpgMappings() {
+      if (!confirm('⚠️ This will delete ALL EPG mappings!\n\nChannels and groups will be preserved.\n\nYou will need to re-run auto-matching.\n\nAre you sure?')) {
+        return;
+      }
+
+      this.resetting = true;
+      this.resetStatusMessage = '';
+
+      try {
+        const response = await axios.post('/api/reset/epg-mappings');
+        this.resetStatusType = 'success';
+        this.resetStatusMessage = response.data.message;
+        this.addToast('EPG mappings reset successfully', 'success');
+      } catch (error) {
+        this.resetStatusType = 'error';
+        this.resetStatusMessage = error.response?.data?.error || 'Reset failed';
+        this.addToast('Failed to reset EPG mappings', 'error');
+      } finally {
+        this.resetting = false;
+      }
+    },
+    async resetMovies() {
+      if (!confirm('⚠️ WARNING: This will delete ALL movies and STRM files!\n\nTV channels and groups will NOT be affected.\n\nAre you sure?')) {
+        return;
+      }
+
+      this.resetting = true;
+      this.resetStatusMessage = '';
+
+      try {
+        const response = await axios.post('/api/movies/reset/all');
+        this.resetStatusType = 'success';
+        this.resetStatusMessage = response.data.message;
+        this.addToast('Movies reset successfully', 'success');
+      } catch (error) {
+        this.resetStatusType = 'error';
+        this.resetStatusMessage = error.response?.data?.error || 'Reset failed';
+        this.addToast('Failed to reset movies', 'error');
+      } finally {
+        this.resetting = false;
+      }
+    },
+    async resetAllTvData() {
+      if (!confirm('🚨 EXTREME DANGER 🚨\n\nThis will delete ALL TV data:\n- All channels\n- All groups (except Unassigned)\n- All EPG mappings\n\nMovies will NOT be affected.\n\nThis action CANNOT be undone!\n\nAre you ABSOLUTELY sure?')) {
+        return;
+      }
+
+      if (!confirm('LAST WARNING: Click OK to permanently delete all TV data.\n\nThere is NO going back!')) {
+        return;
+      }
+
+      this.resetting = true;
+      this.resetStatusMessage = '';
+
+      try {
+        const response = await axios.post('/api/reset/tv-all');
+        this.resetStatusType = 'success';
+        this.resetStatusMessage = response.data.message;
+        this.addToast('All TV data reset successfully', 'success');
+      } catch (error) {
+        this.resetStatusType = 'error';
+        this.resetStatusMessage = error.response?.data?.error || 'Reset failed';
+        this.addToast('Failed to reset TV data', 'error');
+      } finally {
+        this.resetting = false;
+      }
+    },
+    async resetAll() {
+      if (!confirm('🚨 EXTREME DANGER 🚨\n\nThis will delete EVERYTHING:\n- All channels\n- All groups (except Unassigned)\n- All movies\n- All STRM files\n- All EPG mappings\n\nThis action CANNOT be undone!\n\nAre you ABSOLUTELY sure?')) {
+        return;
+      }
+
+      if (!confirm('LAST WARNING: Click OK to permanently delete everything.\n\nThere is NO going back!')) {
+        return;
+      }
+
+      this.resetting = true;
+      this.resetStatusMessage = '';
+
+      try {
+        const response = await axios.post('/api/reset/all');
+        this.resetStatusType = 'success';
+        this.resetStatusMessage = response.data.message;
+        this.addToast('All data reset successfully', 'success');
+      } catch (error) {
+        this.resetStatusType = 'error';
+        this.resetStatusMessage = error.response?.data?.error || 'Reset failed';
+        this.addToast('Failed to reset all data', 'error');
+      } finally {
+        this.resetting = false;
+      }
+    },
+    // Emby Integration methods
+    async toggleEmbyIntegration() {
+      // Save the emby_enabled state immediately when toggle changes
+      try {
+        await axios.put('/api/movies/emby-config', {
+          emby_enabled: this.embyEnabled,
+          emby_server_url: this.embyConfig.serverUrl,
+          emby_api_token: this.embyConfig.apiToken
+        });
+
+        if (this.addToast) {
+          this.addToast(
+            this.embyEnabled ? 'Emby integration enabled' : 'Emby integration disabled',
+            'success'
+          );
+        }
+
+        // Notify MoviesView about the change
+        window.dispatchEvent(new CustomEvent('emby-config-updated', {
+          detail: {
+            enabled: this.embyEnabled,
+            configured: !!(this.embyConfig.serverUrl && this.embyConfig.apiToken)
+          }
+        }));
+      } catch (error) {
+        console.error('Error toggling Emby integration:', error);
+        console.log('this:', this);
+        console.log('this.addToast:', this.addToast);
+        // Revert toggle on error
+        this.embyEnabled = !this.embyEnabled;
+        if (this.addToast) {
+          this.addToast('Failed to update Emby integration', 'error');
+        }
+      }
+    },
+    async saveEmbyConfig() {
+      if (!this.embyConfig.serverUrl || !this.embyConfig.apiToken) {
+        this.addToast('Please fill all Emby fields', 'error');
+        return;
+      }
+
+      this.isSavingEmby = true;
+      try {
+        await axios.put('/api/movies/emby-config', {
+          emby_server_url: this.embyConfig.serverUrl,
+          emby_api_token: this.embyConfig.apiToken,
+          emby_enabled: this.embyEnabled
+        });
+        this.addToast('Emby configuration saved successfully', 'success');
+
+        // Emit event to notify MoviesView
+        window.dispatchEvent(new CustomEvent('emby-config-updated', {
+          detail: {
+            enabled: this.embyEnabled,
+            configured: true
+          }
+        }));
+      } catch (error) {
+        console.error('Error saving Emby config:', error);
+        this.addToast(
+          error.response?.data?.message || 'Failed to save Emby configuration',
+          'error'
+        );
+      } finally {
+        this.isSavingEmby = false;
+      }
     }
   }
 };

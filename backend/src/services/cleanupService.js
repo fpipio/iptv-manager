@@ -1,5 +1,4 @@
 const db = require('../db/database');
-const { sanitizeFilename } = require('./movieService');
 
 /**
  * Cleanup Service
@@ -171,6 +170,35 @@ async function analyzeMovies() {
 }
 
 /**
+ * Find a unique movie name by adding [2], [3], etc. if duplicates exist
+ * @param {string} baseName - The base name to make unique
+ * @param {string} excludeId - Movie ID to exclude from duplicate check (the one being renamed)
+ * @returns {string} Unique name
+ */
+function findUniqueName(baseName, excludeId) {
+  const checkStmt = db.prepare(`SELECT id FROM movies WHERE tvg_name = ? AND id != ?`);
+
+  // Check if base name is available
+  if (!checkStmt.get(baseName, excludeId)) {
+    return baseName;
+  }
+
+  // Base name exists, try [2], [3], etc.
+  let counter = 2;
+  while (counter < 100) { // Safety limit
+    const candidateName = `${baseName} [${counter}]`;
+    if (!checkStmt.get(candidateName, excludeId)) {
+      console.log(`[CleanupService] Duplicate found, using: "${candidateName}"`);
+      return candidateName;
+    }
+    counter++;
+  }
+
+  // Fallback if somehow we reach 100 duplicates
+  return `${baseName} [${Date.now()}]`;
+}
+
+/**
  * Apply cleanup to selected movies (rename in database only, STRM regeneration handled separately)
  * @param {Array<string>} movieIds - Array of movie IDs to clean
  * @returns {Promise<{success: boolean, updated: number, errors: Array}>}
@@ -221,14 +249,17 @@ async function applyCleanup(movieIds) {
             continue;
           }
 
+          // Check for duplicates and find unique name
+          const uniqueName = findUniqueName(result.cleaned, movieId);
+
           // Update movie name
-          updateStmt.run(result.cleaned, movieId);
+          updateStmt.run(uniqueName, movieId);
 
           // Record in history
-          historyStmt.run(movieId, movie.tvg_name, result.cleaned, result.patternId);
+          historyStmt.run(movieId, movie.tvg_name, uniqueName, result.patternId);
 
           updated++;
-          console.log(`[CleanupService] Updated: "${movie.tvg_name}" -> "${result.cleaned}"`);
+          console.log(`[CleanupService] Updated: "${movie.tvg_name}" -> "${uniqueName}"`);
         } catch (err) {
           console.error(`[CleanupService] Error updating movie ${movieId}:`, err);
           errors.push({ id: movieId, error: err.message });

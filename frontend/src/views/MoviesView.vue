@@ -71,7 +71,78 @@
         </div>
       </div>
 
-      <!-- Output Directory Config -->
+      <!-- Tabs Navigation -->
+      <div class="mb-6">
+        <div class="border-b border-gray-200">
+          <nav class="-mb-px flex space-x-8">
+            <button
+              @click="activeTab = 'import'"
+              :class="[
+                activeTab === 'import'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+              ]"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+              Import
+            </button>
+            <button
+              @click="activeTab = 'library'"
+              :class="[
+                activeTab === 'library'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+              ]"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>
+              </svg>
+              Library
+            </button>
+            <button
+              @click="activeTab = 'cleanup'"
+              :class="[
+                activeTab === 'cleanup'
+                  ? 'border-orange-500 text-orange-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+              ]"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              Cleanup
+            </button>
+            <button
+              @click="activeTab = 'year-libraries'"
+              :class="[
+                activeTab === 'year-libraries'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+              ]"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              Year Organization
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Import Tab Content -->
+      <div v-if="activeTab === 'import'" class="bg-white rounded-lg shadow p-6">
+        <MoviesImportTab />
+      </div>
+
+      <!-- Library Tab Content -->
+      <div v-if="activeTab === 'library'">
+        <!-- Output Directory Config -->
       <div class="bg-white rounded-lg shadow p-4 mb-6">
         <div class="flex items-center gap-4">
           <label class="text-sm font-medium text-gray-700 whitespace-nowrap">
@@ -101,84 +172,37 @@
         </p>
       </div>
 
-      <!-- Emby Configuration -->
-      <div class="bg-white rounded-lg shadow p-4 mb-6">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-          </svg>
-          Emby Integration (Optional)
-        </h3>
-
-        <div class="space-y-3">
-          <!-- Emby Server URL -->
+      <!-- Emby Integration (Conditional) -->
+      <div v-if="isEmbyConfigured" class="bg-green-50 border border-green-200 rounded-lg shadow p-4 mb-6">
+        <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <label class="text-xs font-medium text-gray-600 w-28">Server URL:</label>
-            <input
-              v-model="embyConfig.serverUrl"
-              type="text"
-              class="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm font-mono"
-              placeholder="http://192.168.88.11:8097"
-            />
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <div>
+              <h3 class="text-sm font-semibold text-gray-700">Emby Integration</h3>
+              <p class="text-xs text-gray-500">
+                Refresh all Emby libraries after STRM file changes
+                <span class="text-gray-400 ml-1">(Configure in Settings > General > Integrations)</span>
+              </p>
+            </div>
           </div>
-
-          <!-- Emby API Token -->
-          <div class="flex items-center gap-3">
-            <label class="text-xs font-medium text-gray-600 w-28">API Token:</label>
-            <input
-              v-model="embyConfig.apiToken"
-              type="password"
-              class="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm font-mono"
-              placeholder="Your Emby API Token"
-            />
-          </div>
-
-          <!-- Emby Library ID -->
-          <div class="flex items-center gap-3">
-            <label class="text-xs font-medium text-gray-600 w-28">Library ID:</label>
-            <input
-              v-model="embyConfig.libraryId"
-              type="text"
-              class="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm font-mono"
-              placeholder="659436"
-            />
-          </div>
-
-          <!-- Actions -->
-          <div class="flex items-center gap-3 pt-2">
-            <button
-              @click="saveEmbyConfig"
-              :disabled="isSavingEmby"
-              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 text-sm flex items-center gap-2"
-            >
-              <svg v-if="isSavingEmby" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Save Config
-            </button>
-
-            <button
-              @click="refreshEmbyLibrary"
-              :disabled="isRefreshingEmby || !isEmbyConfigured"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm flex items-center gap-2"
-              :title="!isEmbyConfigured ? 'Configure Emby first' : 'Refresh Emby Library'"
-            >
-              <svg v-if="isRefreshingEmby" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-              </svg>
-              Refresh Library
-            </button>
-          </div>
+          <button
+            @click="refreshEmbyLibrary"
+            :disabled="isRefreshingEmby"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm flex items-center gap-2"
+            title="Refresh All Emby Libraries"
+          >
+            <svg v-if="isRefreshingEmby" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            {{ isRefreshingEmby ? 'Refreshing...' : 'Refresh All Libraries' }}
+          </button>
         </div>
-
-        <p class="mt-2 text-xs text-gray-500">
-          Configure Emby to automatically refresh the library after STRM files are created/deleted.
-        </p>
       </div>
 
       <!-- Actions Bar -->
@@ -381,6 +405,23 @@
         </div>
 
       </div>
+      </div>
+      <!-- End Movies Tab Content -->
+
+      <!-- Cleanup Tab Content -->
+      <CleanupTab
+        v-if="activeTab === 'cleanup'"
+        @show-toast="showToast"
+        @refresh-movies="loadData"
+      />
+      <!-- End Cleanup Tab Content -->
+
+      <!-- Year Libraries Tab Content -->
+      <YearLibrariesTab
+        v-if="activeTab === 'year-libraries'"
+        @toast="showToast"
+      />
+      <!-- End Year Libraries Tab Content -->
     </div>
 
     <!-- URL Modal -->
@@ -431,15 +472,24 @@
 <script>
 import axios from 'axios';
 import { useToast } from '../composables/useToast';
+import MoviesImportTab from '../components/movies/MoviesImportTab.vue';
+import CleanupTab from '../components/movies/CleanupTab.vue';
+import YearLibrariesTab from '../components/movies/YearLibrariesTab.vue';
 
 export default {
   name: 'MoviesView',
+  components: {
+    MoviesImportTab,
+    CleanupTab,
+    YearLibrariesTab
+  },
   setup() {
     const { showToast } = useToast();
     return { showToast };
   },
   data() {
     return {
+      activeTab: 'import', // 'import', 'library', 'cleanup', 'year-libraries'
       movies: [],
       stats: {
         total: 0,
@@ -449,7 +499,6 @@ export default {
       loading: false,
       isRescanning: false,
       isSavingConfig: false,
-      isSavingEmby: false,
       isRefreshingEmby: false,
       searchQuery: '',
       filteredMovies: [],
@@ -462,7 +511,7 @@ export default {
       embyConfig: {
         serverUrl: '',
         apiToken: '',
-        libraryId: ''
+        enabled: false
       },
       totalMovies: 0,
       expandedGroups: new Set(), // Track which groups are expanded
@@ -495,9 +544,9 @@ export default {
     },
 
     isEmbyConfigured() {
-      return this.embyConfig.serverUrl &&
-             this.embyConfig.apiToken &&
-             this.embyConfig.libraryId;
+      return this.embyConfig.enabled &&
+             this.embyConfig.serverUrl &&
+             this.embyConfig.apiToken;
     }
   },
   async mounted() {
@@ -505,12 +554,17 @@ export default {
     await this.loadConfig();
     // Then load movies
     this.loadData();
+
+    // Listen for Emby config updates from Settings
+    window.addEventListener('emby-config-updated', this.handleEmbyConfigUpdate);
   },
   beforeUnmount() {
     // Clear all polling intervals
     for (const interval of this.pollIntervals.values()) {
       clearInterval(interval);
     }
+    // Remove event listener
+    window.removeEventListener('emby-config-updated', this.handleEmbyConfigUpdate);
   },
   methods: {
     async loadData() {
@@ -599,9 +653,9 @@ export default {
           this.embyConfig = {
             serverUrl: embyRes.data.data.emby_server_url || '',
             apiToken: embyRes.data.data.emby_api_token || '',
-            libraryId: embyRes.data.data.emby_library_id || ''
+            enabled: embyRes.data.data.emby_enabled === true
           };
-          console.log('[MoviesView] ✓ Loaded Emby config');
+          console.log('[MoviesView] ✓ Loaded Emby config, enabled:', this.embyConfig.enabled);
         }
       } catch (error) {
         console.error('[MoviesView] ⚠ Error loading Emby config:', error);
@@ -876,29 +930,9 @@ export default {
       }
     },
 
-    async saveEmbyConfig() {
-      if (!this.embyConfig.serverUrl || !this.embyConfig.apiToken || !this.embyConfig.libraryId) {
-        this.showToast('Please fill all Emby fields', 'error');
-        return;
-      }
-
-      this.isSavingEmby = true;
-      try {
-        await axios.put('/api/movies/emby-config', {
-          emby_server_url: this.embyConfig.serverUrl,
-          emby_api_token: this.embyConfig.apiToken,
-          emby_library_id: this.embyConfig.libraryId
-        });
-        this.showToast('Emby configuration saved successfully', 'success');
-      } catch (error) {
-        console.error('Error saving Emby config:', error);
-        this.showToast(
-          error.response?.data?.message || 'Failed to save Emby configuration',
-          'error'
-        );
-      } finally {
-        this.isSavingEmby = false;
-      }
+    handleEmbyConfigUpdate() {
+      // Reload Emby config when updated from Settings
+      this.loadConfig();
     },
 
     async refreshEmbyLibrary() {

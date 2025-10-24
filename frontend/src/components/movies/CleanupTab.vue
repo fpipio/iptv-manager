@@ -617,16 +617,24 @@ export default {
         const data = await response.json();
 
         if (data.success) {
+          let message = `Successfully cleaned ${data.updated} movie names!`;
+
+          // Show errors if any
+          if (data.errors && data.errors.length > 0) {
+            message += ` (${data.errors.length} failed)`;
+            console.warn('Cleanup errors:', data.errors);
+          }
+
           this.$emit('show-toast', {
-            message: `Successfully cleaned ${data.updated} movie names!`,
-            type: 'success'
+            message,
+            type: data.errors && data.errors.length > 0 ? 'warning' : 'success'
           });
 
-          // Remove cleaned movies from all suggestions
-          this.allSuggestions = this.allSuggestions.filter(s => !this.selectedMovies.has(s.id));
+          // Reload analyze to get fresh data
+          await this.analyzeMovies();
+
           this.selectedMovies.clear();
           this.selectAll = false;
-          this.currentPage = 1;
 
           // Reload stats
           await this.loadStats();

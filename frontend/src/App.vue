@@ -10,46 +10,25 @@
             </div>
             <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
               <router-link
-                to="/import"
-                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                :class="isActive('/import') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
+                to="/channels"
+                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium gap-2"
+                :class="isActive('/channels') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
               >
-                Import
-              </router-link>
-              <router-link
-                to="/manage"
-                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                :class="isActive('/manage') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
-              >
-                Manage
+                📺 Channels
               </router-link>
               <router-link
                 to="/movies"
-                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium gap-2"
                 :class="isActive('/movies') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
               >
-                Movies
-              </router-link>
-              <router-link
-                to="/export"
-                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                :class="isActive('/export') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
-              >
-                Export
-              </router-link>
-              <router-link
-                to="/epg/matching"
-                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                :class="isActive('/epg/matching') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
-              >
-                EPG Matching
+                🎬 Movies
               </router-link>
               <router-link
                 to="/settings"
-                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium gap-2"
                 :class="isActive('/settings') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
               >
-                Settings
+                ⚙️ Settings
               </router-link>
             </div>
           </div>
@@ -82,7 +61,7 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import ToastNotification from './components/ToastNotification.vue'
+import ToastNotification from './components/shared/ToastNotification.vue'
 import { useToast } from './composables/useToast'
 
 const route = useRoute()

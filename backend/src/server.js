@@ -26,6 +26,8 @@ app.use('/api/import', require('./routes/import'));
 app.use('/api/export', require('./routes/export'));
 app.use('/api/epg', require('./routes/epg'));
 app.use('/api/movies', require('./routes/movies'));
+app.use('/api/cleanup', require('./routes/cleanup'));
+app.use('/api/year-libraries', require('./routes/yearLibraries'));
 app.use('/api/reset', require('./routes/reset'));
 
 // Serve M3U output files (BEFORE frontend fallback)

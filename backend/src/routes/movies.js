@@ -436,9 +436,11 @@ router.get('/emby-config', async (req, res) => {
 
     const serverUrl = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_server_url'`).get();
     const apiToken = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_api_token'`).get();
+    const enabled = db.prepare(`SELECT value FROM epg_config WHERE key = 'emby_enabled'`).get();
 
     config.emby_server_url = serverUrl?.value || '';
     config.emby_api_token = apiToken?.value || '';
+    config.emby_enabled = enabled?.value === '1';
 
     res.json({
       success: true,
@@ -460,14 +462,7 @@ router.get('/emby-config', async (req, res) => {
  */
 router.put('/emby-config', async (req, res) => {
   try {
-    const { emby_server_url, emby_api_token } = req.body;
-
-    if (!emby_server_url || !emby_api_token) {
-      return res.status(400).json({
-        success: false,
-        message: 'emby_server_url and emby_api_token are required'
-      });
-    }
+    const { emby_server_url, emby_api_token, emby_enabled } = req.body;
 
     const db = require('../db/database');
     const stmt = db.prepare(
@@ -475,15 +470,26 @@ router.put('/emby-config', async (req, res) => {
        VALUES (?, ?, datetime('now'))`
     );
 
-    stmt.run('emby_server_url', emby_server_url);
-    stmt.run('emby_api_token', emby_api_token);
+    // Always save emby_enabled flag
+    if (emby_enabled !== undefined) {
+      stmt.run('emby_enabled', emby_enabled ? '1' : '0');
+    }
+
+    // Save credentials only if provided (when enabling)
+    if (emby_server_url !== undefined) {
+      stmt.run('emby_server_url', emby_server_url);
+    }
+    if (emby_api_token !== undefined) {
+      stmt.run('emby_api_token', emby_api_token);
+    }
 
     res.json({
       success: true,
       message: 'Emby configuration updated successfully',
       data: {
-        emby_server_url,
-        emby_api_token
+        emby_server_url: emby_server_url || '',
+        emby_api_token: emby_api_token || '',
+        emby_enabled: emby_enabled !== undefined ? emby_enabled : true
       }
     });
   } catch (error) {
