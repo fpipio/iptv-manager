@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
+  <div class="min-h-screen bg-gray-50 p-4 sm:p-6">
     <!-- Confirm Dialogs -->
     <ConfirmDialog
       v-for="d in confirm.dialogs.value"
@@ -15,40 +15,56 @@
 
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">EPG Channel Matching</h1>
-        <p class="mt-2 text-gray-600">
+      <div class="mb-6 sm:mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">EPG Channel Matching</h1>
+        <p class="mt-2 text-sm sm:text-base text-gray-600">
           Map your M3U channels to EPG sources for automatic TV guide data
         </p>
       </div>
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow p-4">
-          <div class="text-sm text-gray-500">Total Channels</div>
-          <div class="text-2xl font-bold text-gray-900">{{ stats.totalChannels || 0 }}</div>
+      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div class="bg-white rounded-lg shadow p-3 sm:p-4">
+          <div class="text-xs sm:text-sm text-gray-500">Total Channels</div>
+          <div class="text-xl sm:text-2xl font-bold text-gray-900">{{ stats.totalChannels || 0 }}</div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <div class="text-sm text-gray-500">Mapped</div>
-          <div class="text-2xl font-bold text-green-600">{{ stats.mappedChannels || 0 }}</div>
+        <div class="bg-white rounded-lg shadow p-3 sm:p-4">
+          <div class="text-xs sm:text-sm text-gray-500">Mapped</div>
+          <div class="text-xl sm:text-2xl font-bold text-green-600">{{ stats.mappedChannels || 0 }}</div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <div class="text-sm text-gray-500">Unmapped</div>
-          <div class="text-2xl font-bold text-orange-600">{{ stats.unmappedChannels || 0 }}</div>
+        <div class="bg-white rounded-lg shadow p-3 sm:p-4">
+          <div class="text-xs sm:text-sm text-gray-500">Unmapped</div>
+          <div class="text-xl sm:text-2xl font-bold text-orange-600">{{ stats.unmappedChannels || 0 }}</div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <div class="text-sm text-gray-500">Manual Overrides</div>
-          <div class="text-2xl font-bold text-blue-600">{{ stats.manualMatches || 0 }}</div>
+        <div class="bg-white rounded-lg shadow p-3 sm:p-4">
+          <div class="text-xs sm:text-sm text-gray-500 truncate">Manual Overrides</div>
+          <div class="text-xl sm:text-2xl font-bold text-blue-600">{{ stats.manualMatches || 0 }}</div>
         </div>
       </div>
 
       <!-- Actions Bar -->
-      <div class="bg-white rounded-lg shadow p-4 mb-6">
-        <div class="flex flex-wrap items-center gap-4">
+      <div class="bg-white rounded-lg shadow p-3 sm:p-4 mb-4 sm:mb-6">
+        <!-- Search Bar -->
+        <div class="mb-3 sm:mb-4">
+          <div class="relative max-w-md">
+            <input
+              v-model="channelSearchQuery"
+              type="text"
+              placeholder="Search channels by name, tvg-id, EPG source..."
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+            />
+            <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2 sm:gap-4">
           <button
             @click="syncEpgChannels"
             :disabled="isAnyOperationRunning"
-            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            class="px-3 py-2 sm:px-4 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             <span v-if="syncing" class="flex items-center">
               <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -62,30 +78,38 @@
           <button
             @click="runAutoMatching"
             :disabled="isAnyOperationRunning || stats.totalChannels === 0"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            class="px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             <span v-if="matching" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Running Auto-Matching...
+              <span class="hidden sm:inline">Running Auto-Matching...</span>
+              <span class="sm:hidden">Matching...</span>
             </span>
-            <span v-else>Run Auto-Matching</span>
+            <template v-else>
+              <span class="hidden sm:inline">Run Auto-Matching</span>
+              <span class="sm:hidden">Auto-Match</span>
+            </template>
           </button>
           <button
             @click="grabCustomEpg"
             :disabled="isAnyOperationRunning || stats.mappedChannels === 0"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            class="px-3 py-2 sm:px-4 text-sm sm:text-base bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             <span v-if="grabbing" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Grabbing EPG Data...
+              <span class="hidden sm:inline">Grabbing EPG Data...</span>
+              <span class="sm:hidden">Grabbing...</span>
             </span>
-            <span v-else>Grab EPG Data</span>
+            <template v-else>
+              <span class="hidden sm:inline">Grab EPG Data</span>
+              <span class="sm:hidden">Grab EPG</span>
+            </template>
           </button>
           <label class="ml-auto flex items-center cursor-pointer">
             <input
@@ -93,13 +117,13 @@
               type="checkbox"
               class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
             />
-            <span class="ml-2 text-sm text-gray-700">Show only unmapped</span>
+            <span class="ml-2 text-xs sm:text-sm text-gray-700"><span class="hidden sm:inline">Show only unmapped</span><span class="sm:hidden">Unmapped</span></span>
           </label>
         </div>
       </div>
 
       <!-- EPG Channels Stats (if available) -->
-      <div v-if="epgChannelsStats" class="bg-white rounded-lg shadow p-6 mb-6">
+      <div v-if="epgChannelsStats" class="bg-white rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
         <h2 class="text-xl font-semibold mb-4">Available EPG Channels</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="border-l-4 border-indigo-500 pl-4">
@@ -127,10 +151,12 @@
 
       <!-- Mappings List -->
       <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <h2 class="text-xl font-semibold">Channel Mappings</h2>
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+          <h2 class="text-lg sm:text-xl font-semibold">Channel Mappings</h2>
         </div>
-        <div class="overflow-x-auto">
+
+        <!-- Desktop Table View (hidden on mobile) -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gray-50">
               <tr>
@@ -224,30 +250,90 @@
               </tr>
             </tbody>
           </table>
+        </div>
 
-          <!-- Empty State -->
-          <div v-if="mappings.length === 0 && !loading" class="text-center py-12">
-            <p class="text-gray-500">No channels found. Import an M3U playlist first.</p>
+        <!-- Mobile Card View (hidden on desktop) -->
+        <div class="md:hidden divide-y divide-gray-200">
+          <div v-for="mapping in filteredMappings" :key="mapping.channel_id"
+               :class="['p-3', mapping.epg_xmltv_id ? 'bg-white' : 'bg-orange-50']">
+
+            <!-- Header: Channel Name + TVG-ID -->
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex-1 min-w-0">
+                <div class="font-medium text-gray-900 text-sm truncate">
+                  {{ mapping.custom_tvg_name || mapping.imported_tvg_name || 'Unknown' }}
+                </div>
+                <div class="text-xs text-gray-500 mt-0.5">
+                  {{ mapping.imported_tvg_id || 'No ID' }}
+                </div>
+              </div>
+              <!-- Match Badge -->
+              <span v-if="mapping.match_quality"
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ml-2 flex-shrink-0"
+                    :class="getMatchQualityClass(mapping.match_quality, mapping.is_manual)">
+                {{ mapping.is_manual ? '👤' : '✓' }}
+              </span>
+            </div>
+
+            <!-- EPG Info (only if mapped) -->
+            <div v-if="mapping.epg_display_name" class="mb-2 text-xs">
+              <div class="flex items-center gap-1.5">
+                <span class="font-medium text-gray-700">{{ mapping.epg_display_name }}</span>
+                <span class="text-gray-400">•</span>
+                <span v-if="mapping.source_name" class="px-1.5 py-0.5 rounded text-xs bg-purple-100 text-purple-700">
+                  {{ mapping.source_name }}
+                </span>
+              </div>
+            </div>
+
+            <!-- No mapping message -->
+            <div v-else class="mb-2 text-xs text-orange-600 font-medium">
+              ⚠️ Not mapped to EPG
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 mt-2">
+              <button v-if="mapping.epg_xmltv_id"
+                      @click="viewAlternatives(mapping)"
+                      class="flex-1 px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded-md hover:bg-indigo-700 active:bg-indigo-800 transition-colors">
+                Change
+              </button>
+              <button v-if="mapping.epg_xmltv_id"
+                      @click="deleteMapping(mapping.channel_id)"
+                      class="flex-1 px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-md hover:bg-red-700 active:bg-red-800 transition-colors">
+                Remove
+              </button>
+              <button v-else
+                      @click="manualMapChannel(mapping)"
+                      class="w-full px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-md hover:bg-green-700 active:bg-green-800 transition-colors">
+                Map to EPG
+              </button>
+            </div>
           </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="mappings.length === 0 && !loading" class="text-center py-12">
+          <p class="text-sm sm:text-base text-gray-500">No channels found. Import an M3U playlist first.</p>
         </div>
       </div>
 
       <!-- Manual Map Modal (Search EPG) -->
       <div
         v-if="showManualMapModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
         @click.self="closeManualMapModal"
       >
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-xl font-semibold">Manual EPG Mapping</h3>
-            <p class="text-sm text-gray-600 mt-1">
+        <div class="bg-white rounded-lg shadow-xl max-w-full sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+            <h3 class="text-lg sm:text-xl font-semibold">Manual EPG Mapping</h3>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1">
               Channel: <strong>{{ selectedChannel?.custom_tvg_name || selectedChannel?.imported_tvg_name }}</strong>
               ({{ selectedChannel?.imported_tvg_id || 'no tvg-id' }})
             </p>
           </div>
 
-          <div class="p-6">
+          <div class="p-4 sm:p-6">
             <!-- Search Bar -->
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700 mb-2">Search EPG Channels</label>
@@ -293,10 +379,10 @@
             </div>
           </div>
 
-          <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
+          <div class="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex justify-end">
             <button
               @click="closeManualMapModal"
-              class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              class="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>
@@ -307,19 +393,19 @@
       <!-- Alternatives Modal -->
       <div
         v-if="showAlternativesModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
         @click.self="closeAlternativesModal"
       >
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-xl font-semibold">Change EPG Source</h3>
-            <p class="text-sm text-gray-600 mt-1">
+        <div class="bg-white rounded-lg shadow-xl max-w-full sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+            <h3 class="text-lg sm:text-xl font-semibold">Change EPG Source</h3>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1">
               Channel: <strong>{{ selectedChannel?.custom_tvg_name || selectedChannel?.imported_tvg_name }}</strong>
               ({{ selectedChannel?.imported_tvg_id }})
             </p>
           </div>
 
-          <div class="p-6">
+          <div class="p-4 sm:p-6">
             <!-- Search Bar -->
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700 mb-2">Search EPG Channels</label>
@@ -363,18 +449,19 @@
             </div>
           </div>
 
-          <div class="px-6 py-4 border-t border-gray-200 flex justify-between">
+          <div class="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex justify-between gap-2">
             <button
               v-if="selectedChannel?.is_manual"
               @click="removeManualMapping"
-              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              class="px-3 sm:px-4 py-2 text-sm sm:text-base bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
-              Remove Manual Mapping
+              <span class="hidden sm:inline">Remove Manual Mapping</span>
+              <span class="sm:hidden">Remove</span>
             </button>
             <div v-else></div>
             <button
               @click="closeAlternativesModal"
-              class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              class="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>
@@ -410,6 +497,7 @@ export default {
       stats: {},
       epgChannelsStats: null,
       mappings: [],
+      channelSearchQuery: '',
       showOnlyUnmapped: false,
       showAlternativesModal: false,
       showManualMapModal: false,
@@ -426,10 +514,30 @@ export default {
   },
   computed: {
     filteredMappings() {
-      if (!this.showOnlyUnmapped) {
-        return this.mappings;
+      let filtered = this.mappings;
+
+      // Filter by unmapped status
+      if (this.showOnlyUnmapped) {
+        filtered = filtered.filter(m => !m.epg_xmltv_id);
       }
-      return this.mappings.filter(m => !m.epg_xmltv_id);
+
+      // Filter by search query
+      if (this.channelSearchQuery && this.channelSearchQuery.trim()) {
+        const query = this.channelSearchQuery.toLowerCase().trim();
+        filtered = filtered.filter(m => {
+          const channelName = (m.custom_tvg_name || m.imported_tvg_name || '').toLowerCase();
+          const tvgId = (m.imported_tvg_id || '').toLowerCase();
+          const epgName = (m.epg_display_name || '').toLowerCase();
+          const sourceName = (m.source_name || '').toLowerCase();
+
+          return channelName.includes(query) ||
+                 tvgId.includes(query) ||
+                 epgName.includes(query) ||
+                 sourceName.includes(query);
+        });
+      }
+
+      return filtered;
     },
     filteredAlternatives() {
       if (!this.alternativesSearchQuery) {

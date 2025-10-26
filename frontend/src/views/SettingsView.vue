@@ -1,31 +1,31 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
+  <div class="min-h-screen bg-gray-50 p-3 sm:p-6">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">⚙️ Settings</h1>
-        <p class="mt-2 text-gray-600">
+      <div class="mb-6 sm:mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">⚙️ Settings</h1>
+        <p class="mt-2 text-sm sm:text-base text-gray-600">
           Configure IPTV Manager settings and EPG sources
         </p>
       </div>
 
-      <!-- Tabs Navigation -->
-      <div class="mb-6">
-        <div class="border-b border-gray-200">
-          <nav class="-mb-px flex space-x-8">
+      <!-- Tabs Navigation: scrollable on mobile -->
+      <div class="mb-4 sm:mb-6 -mx-3 sm:mx-0">
+        <div class="border-b border-gray-200 px-3 sm:px-0">
+          <nav class="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-hide">
             <button
               @click="activeTab = 'channels'"
               :class="[
                 activeTab === 'channels'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+                'whitespace-nowrap py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 min-h-touch-sm sm:min-h-0'
               ]"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
-              Channels
+              <span>Channels</span>
             </button>
             <button
               @click="activeTab = 'movies'"
@@ -33,13 +33,13 @@
                 activeTab === 'movies'
                   ? 'border-purple-500 text-purple-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+                'whitespace-nowrap py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 min-h-touch-sm sm:min-h-0'
               ]"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>
               </svg>
-              Movies
+              <span>Movies</span>
             </button>
             <button
               @click="activeTab = 'advanced'"
@@ -47,13 +47,13 @@
                 activeTab === 'advanced'
                   ? 'border-red-500 text-red-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+                'whitespace-nowrap py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 min-h-touch-sm sm:min-h-0'
               ]"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
               </svg>
-              Advanced
+              <span>Advanced</span>
             </button>
           </nav>
         </div>
@@ -62,9 +62,9 @@
       <!-- Movies Tab Content -->
       <div v-if="activeTab === 'movies'">
       <!-- Integrations Card -->
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 class="text-xl font-semibold mb-4 flex items-center">
-          <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
+        <h2 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path>
           </svg>
           Integrations
@@ -98,7 +98,7 @@
           </div>
 
           <!-- Emby Config (shown only when enabled) -->
-          <div v-if="embyEnabled" class="mt-4 space-y-3 pl-11">
+          <div v-if="embyEnabled" class="mt-4 space-y-3 pl-0 sm:pl-11">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
                 Server URL
@@ -107,7 +107,7 @@
                 v-model="embyConfig.serverUrl"
                 type="url"
                 placeholder="http://localhost:8096"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                class="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
               />
             </div>
             <div>
@@ -118,13 +118,13 @@
                 v-model="embyConfig.apiToken"
                 type="password"
                 placeholder="Your Emby API Token"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                class="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
               />
             </div>
             <button
               @click="saveEmbyConfig"
               :disabled="isSavingEmby || !embyConfig.serverUrl || !embyConfig.apiToken"
-              class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+              class="w-full min-h-touch px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
             >
               <svg v-if="isSavingEmby" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -135,20 +135,61 @@
           </div>
         </div>
       </div>
+
+      <!-- STRM File Configuration -->
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
+        <h2 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+          </svg>
+          STRM File Configuration
+        </h2>
+        <p class="text-sm text-gray-600 mb-4">
+          Configure where movie STRM files will be created
+        </p>
+
+        <div class="border rounded-lg p-3 sm:p-4 bg-gray-50">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              STRM Output Directory
+            </label>
+            <input
+              v-model="moviesDirectory"
+              type="text"
+              placeholder="/app/data/movies"
+              class="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono text-base sm:text-sm"
+            />
+            <p class="mt-2 text-xs text-gray-500">
+              Files will be created as: {output_dir}/{movie_name}/{movie_name}.strm
+            </p>
+          </div>
+          <button
+            @click="saveMoviesDirectory"
+            :disabled="isSavingMoviesDir || !moviesDirectory.trim()"
+            class="w-full min-h-touch mt-4 px-4 py-3 sm:py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+          >
+            <svg v-if="isSavingMoviesDir" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ isSavingMoviesDir ? 'Saving...' : 'Save Directory' }}
+          </button>
+        </div>
+      </div>
       </div>
 
       <!-- Channels Tab Content -->
       <div v-if="activeTab === 'channels'">
       <!-- EPG Info Card -->
-      <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow p-6 mb-6">
-        <div class="flex items-start">
+      <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
+        <div class="flex items-start gap-3 sm:gap-0">
           <div class="flex-shrink-0">
-            <svg class="h-6 w-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div class="ml-4 flex-1">
-            <h3 class="text-lg font-semibold text-blue-900 mb-2">EPG Sources Information</h3>
+          <div class="sm:ml-4 flex-1">
+            <h3 class="text-base sm:text-lg font-semibold text-blue-900 mb-2">EPG Sources Information</h3>
             <p class="text-sm text-blue-800 mb-3">
               EPG sources are automatically managed by the iptv-org/epg grabber.
               You can find all available sources and their configurations here:
@@ -156,7 +197,7 @@
             <a
               href="https://github.com/iptv-org/epg/tree/master/sites"
               target="_blank"
-              class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              class="inline-flex items-center min-h-touch px-4 py-3 sm:py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
               <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -171,8 +212,8 @@
       </div>
 
       <!-- EPG Configuration Card -->
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 class="text-xl font-semibold mb-4">EPG Configuration</h2>
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
+        <h2 class="text-lg sm:text-xl font-semibold mb-4">EPG Configuration</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -183,7 +224,7 @@
               type="number"
               min="1"
               max="14"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-base"
               @change="saveConfig"
             />
             <p class="mt-1 text-xs text-gray-500">Number of days of program data to retrieve</p>
@@ -197,7 +238,7 @@
               type="number"
               min="1"
               max="10"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-base"
               @change="saveConfig"
             />
             <p class="mt-1 text-xs text-gray-500">Concurrent connections (higher = faster but risky)</p>
@@ -206,15 +247,15 @@
       </div>
 
       <!-- EPG Sources List -->
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <div class="flex items-center justify-between mb-4">
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
           <div>
-            <h2 class="text-xl font-semibold">EPG Sources</h2>
+            <h2 class="text-lg sm:text-xl font-semibold">EPG Sources</h2>
             <p class="text-sm text-gray-500 mt-1">Drag to reorder (priority: top = highest)</p>
           </div>
           <button
             @click="showAddSourceModal = true"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            class="min-h-touch w-full sm:w-auto px-4 py-3 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 whitespace-nowrap"
           >
             + Add Source
           </button>
@@ -540,7 +581,10 @@ export default {
         serverUrl: '',
         apiToken: ''
       },
-      isSavingEmby: false
+      isSavingEmby: false,
+      // Movies Directory Configuration
+      moviesDirectory: '',
+      isSavingMoviesDir: false
     };
   },
   mounted() {
@@ -549,11 +593,12 @@ export default {
   methods: {
     async loadData() {
       try {
-        const [sourcesRes, configRes, statusRes, embyRes] = await Promise.all([
+        const [sourcesRes, configRes, statusRes, embyRes, moviesConfigRes] = await Promise.all([
           axios.get('/api/epg/sources'),
           axios.get('/api/epg/config'),
           axios.get('/api/epg/status'),
-          axios.get('/api/movies/emby-config')
+          axios.get('/api/movies/emby-config'),
+          axios.get('/api/movies/config')
         ]);
 
         // Sort sources by priority (1 = highest = first)
@@ -569,6 +614,11 @@ export default {
           };
           // Load emby_enabled flag from database
           this.embyEnabled = embyRes.data.data.emby_enabled === true;
+        }
+
+        // Load movies directory config
+        if (moviesConfigRes.data.success && moviesConfigRes.data.data) {
+          this.moviesDirectory = moviesConfigRes.data.data.movies_directory || '/app/data/movies';
         }
       } catch (error) {
         console.error('Error loading settings data:', error);
@@ -881,6 +931,33 @@ export default {
         );
       } finally {
         this.isSavingEmby = false;
+      }
+    },
+    async saveMoviesDirectory() {
+      if (!this.moviesDirectory || !this.moviesDirectory.trim()) {
+        this.addToast('Movies directory cannot be empty', 'error');
+        return;
+      }
+
+      this.isSavingMoviesDir = true;
+      try {
+        const response = await axios.put('/api/movies/config', {
+          movies_directory: this.moviesDirectory.trim()
+        });
+
+        if (response.data.success) {
+          this.addToast('Movies directory saved successfully', 'success');
+        } else {
+          throw new Error(response.data.message || 'Save failed');
+        }
+      } catch (error) {
+        console.error('Error saving movies directory:', error);
+        this.addToast(
+          error.response?.data?.message || 'Failed to save movies directory',
+          'error'
+        );
+      } finally {
+        this.isSavingMoviesDir = false;
       }
     }
   }

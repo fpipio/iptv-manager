@@ -2,7 +2,7 @@
   <transition name="toast">
     <div
       v-if="show"
-      :class="['min-w-80 max-w-md p-4 rounded-lg shadow-lg', bgClass]"
+      :class="['w-full sm:min-w-80 max-w-sm sm:max-w-md p-4 rounded-lg shadow-lg mx-4 sm:mx-0', bgClass]"
     >
       <div class="flex items-start gap-3">
         <div class="flex-shrink-0">

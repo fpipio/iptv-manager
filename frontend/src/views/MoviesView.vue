@@ -1,15 +1,15 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-8">
+  <div class="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Movies</h1>
-        <p class="text-gray-600">Manage your movie collection and STRM files</p>
+      <div class="mb-6 sm:mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Movies</h1>
+        <p class="text-sm sm:text-base text-gray-600">Manage your movie collection and STRM files</p>
       </div>
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow p-6 relative">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6 relative">
           <!-- Loading Overlay -->
           <div v-if="loadingStats" class="absolute inset-0 bg-white bg-opacity-90 rounded-lg flex flex-col items-center justify-center gap-2 backdrop-blur-sm">
             <svg class="animate-spin h-10 w-10 text-blue-600" fill="none" viewBox="0 0 24 24">
@@ -31,7 +31,7 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6 relative">
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6 relative">
           <!-- Loading Overlay -->
           <div v-if="loadingStats" class="absolute inset-0 bg-white bg-opacity-90 rounded-lg flex flex-col items-center justify-center gap-2 backdrop-blur-sm">
             <svg class="animate-spin h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24">
@@ -53,7 +53,7 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6 relative">
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6 relative">
           <!-- No loading overlay for static config value -->
           <div class="flex items-center justify-between">
             <div>
@@ -74,17 +74,17 @@
       <!-- Tabs Navigation -->
       <div class="mb-6">
         <div class="border-b border-gray-200">
-          <nav class="-mb-px flex space-x-8">
+          <nav class="-mb-px flex space-x-4 md:space-x-8 overflow-x-auto">
             <button
               @click="activeTab = 'library'"
               :class="[
                 activeTab === 'library'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+                'whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm transition-colors flex items-center gap-1.5 md:gap-2'
               ]"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>
               </svg>
               Library
@@ -95,10 +95,10 @@
                 activeTab === 'cleanup'
                   ? 'border-orange-500 text-orange-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+                'whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm transition-colors flex items-center gap-1.5 md:gap-2'
               ]"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>
               Cleanup
@@ -109,13 +109,14 @@
                 activeTab === 'year-libraries'
                   ? 'border-purple-500 text-purple-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+                'whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm transition-colors flex items-center gap-1.5 md:gap-2'
               ]"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
-              Year Organization
+              <span class="hidden sm:inline">Year Organization</span>
+              <span class="sm:hidden">Years</span>
             </button>
             <button
               @click="activeTab = 'import'"
@@ -123,10 +124,10 @@
                 activeTab === 'import'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2'
+                'whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm transition-colors flex items-center gap-1.5 md:gap-2'
               ]"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
               </svg>
               Import
@@ -142,55 +143,25 @@
 
       <!-- Library Tab Content -->
       <div v-if="activeTab === 'library'">
-        <!-- Output Directory Config -->
-      <div class="bg-white rounded-lg shadow p-4 mb-6">
-        <div class="flex items-center gap-4">
-          <label class="text-sm font-medium text-gray-700 whitespace-nowrap">
-            STRM Output Directory:
-          </label>
-          <input
-            v-model="outputDirectory"
-            type="text"
-            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono text-sm"
-            placeholder="/app/data/movies"
-            @blur="saveOutputDirectory"
-          />
-          <button
-            @click="saveOutputDirectory"
-            :disabled="isSavingConfig"
-            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <svg v-if="isSavingConfig" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>{{ isSavingConfig ? 'Saving...' : 'Save' }}</span>
-          </button>
-        </div>
-        <p class="mt-2 text-xs text-gray-500">
-          Files will be created as: {output_dir}/{movie_name}/{movie_name}.strm
-        </p>
-      </div>
-
       <!-- Emby Integration (Conditional) -->
-      <div v-if="isEmbyConfigured" class="bg-green-50 border border-green-200 rounded-lg shadow p-4 mb-6">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div v-if="isEmbyConfigured" class="bg-green-50 border border-green-200 rounded-lg shadow p-4 md:p-6 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center gap-3 md:justify-between">
+          <div class="flex items-start md:items-center gap-3">
+            <svg class="w-5 h-5 md:w-6 md:h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
             </svg>
             <div>
               <h3 class="text-sm font-semibold text-gray-700">Emby Integration</h3>
               <p class="text-xs text-gray-500">
                 Refresh all Emby libraries after STRM file changes
-                <span class="text-gray-400 ml-1">(Configure in Settings > General > Integrations)</span>
+                <span class="hidden sm:inline text-gray-400 ml-1">(Configure in Settings > General > Integrations)</span>
               </p>
             </div>
           </div>
           <button
             @click="refreshEmbyLibrary"
             :disabled="isRefreshingEmby"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm flex items-center gap-2"
+            class="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-xs md:text-sm flex items-center justify-center gap-2"
             title="Refresh All Emby Libraries"
           >
             <svg v-if="isRefreshingEmby" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -200,22 +171,23 @@
             <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
-            {{ isRefreshingEmby ? 'Refreshing...' : 'Refresh All Libraries' }}
+            <span class="hidden sm:inline">{{ isRefreshingEmby ? 'Refreshing...' : 'Refresh All Libraries' }}</span>
+            <span class="sm:hidden">{{ isRefreshingEmby ? 'Refreshing...' : 'Refresh' }}</span>
           </button>
         </div>
       </div>
 
       <!-- Actions Bar -->
-      <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-6 md:mb-8">
+        <div class="flex flex-col gap-3 md:gap-4">
           <!-- Search -->
-          <div class="flex-1 max-w-md">
+          <div class="w-full">
             <div class="relative">
               <input
                 v-model="searchQuery"
                 type="text"
                 placeholder="Search movies..."
-                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 @input="debouncedSearch"
               />
               <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,24 +197,25 @@
           </div>
 
           <!-- Action Buttons -->
-          <div class="flex gap-3">
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               @click="rescanFilesystem"
               :disabled="isRescanning"
-              class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+              class="flex-1 sm:flex-none px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
             >
-              <svg v-if="isRescanning" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+              <svg v-if="isRescanning" class="animate-spin h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>{{ isRescanning ? 'Scanning...' : 'Re-scan Filesystem' }}</span>
+              <span class="hidden sm:inline">{{ isRescanning ? 'Scanning...' : 'Re-scan Filesystem' }}</span>
+              <span class="sm:hidden">{{ isRescanning ? 'Scanning...' : 'Re-scan' }}</span>
             </button>
 
             <button
               @click="loadData"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              class="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 text-sm"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
               </svg>
               Refresh
@@ -354,8 +327,8 @@
             </div>
           </div>
 
-          <!-- Group Content (collapsible) -->
-          <div v-if="expandedGroups.has(groupTitle)" class="overflow-x-auto">
+          <!-- Group Content (collapsible) - Desktop Table -->
+          <div v-if="expandedGroups.has(groupTitle)" class="hidden md:block overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -402,6 +375,41 @@
               </tbody>
             </table>
           </div>
+
+          <!-- Group Content (collapsible) - Mobile Cards -->
+          <div v-if="expandedGroups.has(groupTitle)" class="md:hidden divide-y divide-gray-200">
+            <div
+              v-for="movie in groupMovies"
+              :key="movie.id"
+              class="p-3 bg-white hover:bg-gray-50"
+            >
+              <!-- Movie Title -->
+              <div class="font-medium text-gray-900 text-sm mb-1">
+                {{ movie.tvg_name }}
+              </div>
+
+              <!-- Folder Path -->
+              <div v-if="movie.folder_path" class="text-xs text-gray-500 mb-2">
+                📁 {{ getFileName(movie.folder_path) }}
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-2">
+                <button
+                  @click="viewUrl(movie)"
+                  class="flex-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  View URL
+                </button>
+                <button
+                  @click="deleteMovie(movie)"
+                  class="flex-1 px-3 py-1.5 text-xs bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -430,36 +438,36 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       @click.self="showUrlModal = false"
     >
-      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+      <div class="bg-white rounded-lg shadow-xl max-w-full sm:max-w-2xl w-full p-4 sm:p-6 mx-4">
         <div class="flex justify-between items-start mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">Stream URL</h3>
+          <h3 class="text-base sm:text-lg font-semibold text-gray-900">Stream URL</h3>
           <button @click="showUrlModal = false" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
 
         <div class="mb-4">
-          <p class="text-sm font-medium text-gray-700 mb-2">{{ selectedMovie?.tvg_name }}</p>
-          <div class="bg-gray-50 rounded-lg p-4 font-mono text-sm break-all">
+          <p class="text-sm font-medium text-gray-700 mb-2 break-words">{{ selectedMovie?.tvg_name }}</p>
+          <div class="bg-gray-50 rounded-lg p-3 sm:p-4 font-mono text-xs sm:text-sm break-all max-h-48 overflow-y-auto">
             {{ selectedMovie?.url }}
           </div>
         </div>
 
-        <div class="flex justify-end gap-3">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
           <button
             @click="copyUrl"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 text-sm"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
             </svg>
             Copy to Clipboard
           </button>
           <button
             @click="showUrlModal = false"
-            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+            class="w-full sm:w-auto px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm"
           >
             Close
           </button>
@@ -498,7 +506,6 @@ export default {
       },
       loading: false,
       isRescanning: false,
-      isSavingConfig: false,
       isRefreshingEmby: false,
       searchQuery: '',
       filteredMovies: [],
@@ -889,44 +896,6 @@ export default {
       } catch (error) {
         console.error('Error cancelling job:', error);
         this.showToast('Failed to cancel job', 'error');
-      }
-    },
-
-    async saveOutputDirectory() {
-      if (!this.outputDirectory || !this.outputDirectory.trim()) {
-        this.showToast('Output directory cannot be empty', 'error');
-        return;
-      }
-
-      this.isSavingConfig = true;
-      try {
-        console.log('[MoviesView] Saving movies_directory:', this.outputDirectory);
-
-        const response = await axios.put('/api/movies/config', {
-          movies_directory: this.outputDirectory
-        });
-
-        console.log('[MoviesView] PUT /api/movies/config response:', response.data);
-
-        if (response.data.success) {
-          this.showToast('Output directory saved successfully', 'success');
-
-          // Update stats card to show new value
-          this.stats.movies_directory = this.outputDirectory;
-
-          // Reload stats (counts only)
-          await this.loadStats();
-        } else {
-          throw new Error(response.data.message || 'Save failed');
-        }
-      } catch (error) {
-        console.error('[MoviesView] Error saving config:', error);
-        this.showToast(
-          error.response?.data?.message || 'Failed to save output directory',
-          'error'
-        );
-      } finally {
-        this.isSavingConfig = false;
       }
     },
 

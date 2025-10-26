@@ -1,12 +1,13 @@
 <template>
-  <div class="px-4 py-6">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-bold text-gray-900">Manage Channels</h2>
-      <div class="flex items-center space-x-3">
+  <div class="px-3 sm:px-4 py-4 sm:py-6">
+    <!-- Header: responsive layout -->
+    <div class="mb-4 sm:mb-6">
+      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-0">Manage Channels</h2>
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <button
           @click="toggleBulkMode"
           :class="[
-            'px-4 py-2 rounded-md font-medium transition-colors',
+            'min-h-touch sm:min-h-0 px-4 py-3 sm:py-2 rounded-md font-medium transition-colors text-sm sm:text-base',
             bulkEditMode
               ? 'bg-purple-600 text-white hover:bg-purple-700'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -16,7 +17,7 @@
         </button>
         <button
           @click="showNewGroupModal = true"
-          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          class="min-h-touch sm:min-h-0 bg-blue-600 text-white px-4 py-3 sm:py-2 rounded-md hover:bg-blue-700 text-sm sm:text-base"
         >
           + New Group
         </button>
@@ -35,15 +36,15 @@
           v-model="searchQuery"
           type="text"
           placeholder="Search channels by name, logo URL, or tvg-id..."
-          class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          class="block w-full pl-10 pr-10 py-3 sm:py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-base sm:text-sm"
         />
-        <div v-if="searchQuery" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+        <div v-if="searchQuery" class="absolute inset-y-0 right-0 pr-2 sm:pr-3 flex items-center">
           <button
             @click="searchQuery = ''"
-            class="text-gray-400 hover:text-gray-600"
+            class="p-2 text-gray-400 hover:text-gray-600"
             title="Clear search"
           >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-5 w-5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -68,7 +69,7 @@
       <p class="mt-1 text-sm text-gray-500">Try adjusting your search query</p>
       <button
         @click="searchQuery = ''"
-        class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        class="mt-4 min-h-touch px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
       >
         Clear Search
       </button>
@@ -91,70 +92,143 @@
           isUnassignedGroup(group) ? 'bg-orange-50 border-2 border-orange-300' : 'bg-white'
         ]"
       >
-        <!-- Group header -->
+        <!-- Group header: responsive layout -->
         <div :class="[
-          'px-4 py-3 flex items-center justify-between border-b',
+          'px-3 sm:px-4 py-3 border-b',
           isUnassignedGroup(group) ? 'bg-orange-100 border-orange-300' : 'bg-gray-50'
         ]">
-          <div class="flex items-center space-x-3">
-            <button
-              v-if="!isUnassignedGroup(group)"
-              class="drag-handle cursor-move text-gray-400 hover:text-gray-600"
-            >
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
-              </svg>
-            </button>
-            <svg v-else class="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-            </svg>
-            <input
-              v-if="!isUnassignedGroup(group)"
-              type="checkbox"
-              :checked="group.is_exported === 1"
-              @change="toggleGroupExport(group)"
-              class="h-4 w-4 text-blue-600 rounded"
-              title="Include in export"
-            />
-            <span
-              :class="[
-                'text-lg font-medium',
-                isUnassignedGroup(group) ? 'text-orange-900' : 'text-gray-900'
-              ]"
-            >
-              {{ isUnassignedGroup(group) ? '⚠️ ' : '' }}{{ group.name }}
-            </span>
-            <span class="text-sm text-gray-500">({{ getGroupChannelCount(group.id) }} channels)</span>
-            <span v-if="getGroupSelectedCount(group.id) > 0" class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-              {{ getGroupSelectedCount(group.id) }} selected
-            </span>
+          <!-- Mobile: stacked layout -->
+          <div class="flex flex-col gap-3 sm:hidden">
+            <!-- Top row: icon, checkbox, name, expand button -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="!isUnassignedGroup(group)"
+                  class="drag-handle cursor-move text-gray-400 hover:text-gray-600 p-2"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
+                  </svg>
+                </button>
+                <svg v-else class="w-5 h-5 text-orange-600 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <input
+                  v-if="!isUnassignedGroup(group)"
+                  type="checkbox"
+                  :checked="group.is_exported === 1"
+                  @change="toggleGroupExport(group)"
+                  class="h-5 w-5 text-blue-600 rounded"
+                  title="Include in export"
+                />
+                <div class="flex flex-col">
+                  <span
+                    :class="[
+                      'text-base font-medium',
+                      isUnassignedGroup(group) ? 'text-orange-900' : 'text-gray-900'
+                    ]"
+                  >
+                    {{ isUnassignedGroup(group) ? '⚠️ ' : '' }}{{ group.name }}
+                  </span>
+                  <span class="text-xs text-gray-500">({{ getGroupChannelCount(group.id) }} channels)</span>
+                </div>
+              </div>
+              <button
+                @click="toggleGroupExpanded(group.id)"
+                class="p-2 text-gray-600 hover:text-gray-700"
+              >
+                {{ expandedGroups.has(group.id) ? '▼' : '▶' }}
+              </button>
+            </div>
+
+            <!-- Bottom row: badges and actions -->
+            <div class="flex items-center justify-between gap-2 pl-9">
+              <div class="flex gap-2">
+                <span v-if="getGroupSelectedCount(group.id) > 0" class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                  {{ getGroupSelectedCount(group.id) }} selected
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="bulkEditMode && getGroupSelectedCount(group.id) > 0"
+                  @click="openBulkEdit(group.id)"
+                  class="text-purple-600 hover:text-purple-700 text-xs font-medium whitespace-nowrap px-3 py-2"
+                >
+                  Move ({{ getGroupSelectedCount(group.id) }})
+                </button>
+                <button
+                  v-if="!isUnassignedGroup(group)"
+                  @click="editGroup(group)"
+                  class="text-blue-600 hover:text-blue-700 text-sm px-3 py-2"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="flex items-center space-x-2">
-            <button
-              v-if="bulkEditMode && getGroupSelectedCount(group.id) > 0"
-              @click="openBulkEdit(group.id)"
-              class="text-purple-600 hover:text-purple-700 text-sm font-medium"
-            >
-              Move Selected ({{ getGroupSelectedCount(group.id) }})
-            </button>
-            <button
-              v-if="!isUnassignedGroup(group)"
-              @click="editGroup(group)"
-              class="text-blue-600 hover:text-blue-700 text-sm"
-            >
-              Edit
-            </button>
-            <button
-              @click="toggleGroupExpanded(group.id)"
-              class="text-gray-600 hover:text-gray-700"
-            >
-              {{ expandedGroups.has(group.id) ? '▼' : '▶' }}
-            </button>
+
+          <!-- Desktop: original horizontal layout -->
+          <div class="hidden sm:flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <button
+                v-if="!isUnassignedGroup(group)"
+                class="drag-handle cursor-move text-gray-400 hover:text-gray-600"
+              >
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
+                </svg>
+              </button>
+              <svg v-else class="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              <input
+                v-if="!isUnassignedGroup(group)"
+                type="checkbox"
+                :checked="group.is_exported === 1"
+                @change="toggleGroupExport(group)"
+                class="h-4 w-4 text-blue-600 rounded"
+                title="Include in export"
+              />
+              <span
+                :class="[
+                  'text-lg font-medium',
+                  isUnassignedGroup(group) ? 'text-orange-900' : 'text-gray-900'
+                ]"
+              >
+                {{ isUnassignedGroup(group) ? '⚠️ ' : '' }}{{ group.name }}
+              </span>
+              <span class="text-sm text-gray-500">({{ getGroupChannelCount(group.id) }} channels)</span>
+              <span v-if="getGroupSelectedCount(group.id) > 0" class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                {{ getGroupSelectedCount(group.id) }} selected
+              </span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button
+                v-if="bulkEditMode && getGroupSelectedCount(group.id) > 0"
+                @click="openBulkEdit(group.id)"
+                class="text-purple-600 hover:text-purple-700 text-sm font-medium"
+              >
+                Move Selected ({{ getGroupSelectedCount(group.id) }})
+              </button>
+              <button
+                v-if="!isUnassignedGroup(group)"
+                @click="editGroup(group)"
+                class="text-blue-600 hover:text-blue-700 text-sm"
+              >
+                Edit
+              </button>
+              <button
+                @click="toggleGroupExpanded(group.id)"
+                class="text-gray-600 hover:text-gray-700"
+              >
+                {{ expandedGroups.has(group.id) ? '▼' : '▶' }}
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Channels list (expandable) -->
-        <div v-if="expandedGroups.has(group.id)" class="p-4">
+        <div v-if="expandedGroups.has(group.id)" class="p-3 sm:p-4">
           <div v-if="getGroupChannels(group.id).length === 0" class="text-gray-500 text-sm">
             No channels in this group
           </div>
@@ -167,9 +241,53 @@
             class="space-y-2"
           >
             <template #item="{ element: channel }">
-            <div
-              class="flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100"
-            >
+            <!-- Mobile: card layout -->
+            <div class="sm:hidden bg-gray-50 rounded p-3 hover:bg-gray-100">
+              <div class="flex items-start gap-2 mb-2">
+                <button class="channel-drag-handle cursor-move text-gray-400 hover:text-gray-600 p-2">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
+                  </svg>
+                </button>
+                <input
+                  v-if="bulkEditMode"
+                  type="checkbox"
+                  :checked="channel.selected"
+                  @click="handleBulkSelectionClick(channel, group.id, $event)"
+                  class="h-5 w-5 text-purple-600 rounded mt-1"
+                  title="Select for bulk move"
+                />
+                <input
+                  type="checkbox"
+                  :checked="channel.is_exported === 1"
+                  @click="handleExportClick(channel, group.id, $event)"
+                  class="h-5 w-5 text-blue-600 rounded mt-1"
+                  title="Include in export"
+                />
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium text-gray-900 text-sm break-words">
+                    {{ channel.is_name_overridden ? channel.custom_tvg_name : channel.imported_tvg_name }}
+                    <span v-if="channel.is_name_overridden || channel.is_logo_overridden || channel.is_group_overridden" class="text-xs text-blue-600 ml-1">★</span>
+                    <span v-if="channel.original_tvg_id" class="text-xs text-orange-600 ml-1" :title="'Original tvg-id: ' + channel.original_tvg_id">↻</span>
+                  </p>
+                  <p class="text-xs text-gray-500 mt-1 break-all">
+                    ID: {{ channel.tvg_id }}
+                  </p>
+                  <p v-if="channel.original_tvg_id" class="text-xs text-orange-500 mt-1 break-all">
+                    Renamed from: {{ channel.original_tvg_id }}
+                  </p>
+                </div>
+              </div>
+              <button
+                @click="editChannel(channel)"
+                class="w-full text-blue-600 hover:text-blue-700 text-sm font-medium py-2 px-3 bg-white rounded border border-blue-200 hover:border-blue-300"
+              >
+                Edit
+              </button>
+            </div>
+
+            <!-- Desktop: horizontal layout -->
+            <div class="hidden sm:flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100">
               <div class="flex items-center space-x-3">
                 <button class="channel-drag-handle cursor-move text-gray-400 hover:text-gray-600">
                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -223,27 +341,27 @@
     </div>
 
     <!-- New Group Modal -->
-    <div v-if="showNewGroupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-medium mb-4">Create New Group</h3>
+    <div v-if="showNewGroupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full">
+        <h3 class="text-base sm:text-lg font-medium mb-4">Create New Group</h3>
         <input
           v-model="newGroupName"
           type="text"
           placeholder="Group name"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          class="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 text-base"
           @keyup.enter="createGroup"
         />
-        <div class="flex justify-end space-x-2">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-0 sm:space-x-2">
           <button
             @click="showNewGroupModal = false; newGroupName = ''"
-            class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            class="min-h-touch sm:min-h-0 px-4 py-3 sm:py-2 border border-gray-300 rounded-md hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             @click="createGroup"
             :disabled="!newGroupName.trim()"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300"
+            class="min-h-touch sm:min-h-0 px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300"
           >
             Create
           </button>
@@ -271,8 +389,8 @@
     />
 
     <!-- Delete Group Options Modal -->
-    <div v-if="showDeleteOptionsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+    <div v-if="showDeleteOptionsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div class="flex items-start space-x-3 mb-4">
           <svg class="w-6 h-6 text-orange-600 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
@@ -337,17 +455,17 @@
           </label>
         </div>
 
-        <div class="flex justify-end space-x-2">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-0 sm:space-x-2">
           <button
             @click="cancelDeleteGroup"
-            class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            class="min-h-touch sm:min-h-0 px-4 py-3 sm:py-2 border border-gray-300 rounded-md hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             @click="executeDeleteGroup"
             :disabled="deleteOption === 'move' && !deleteTargetGroup"
-            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-300"
+            class="min-h-touch sm:min-h-0 px-4 py-3 sm:py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-300"
           >
             Delete Group
           </button>
@@ -356,30 +474,30 @@
     </div>
 
     <!-- Bulk Move Modal -->
-    <div v-if="showBulkEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-medium mb-4">Move {{ channels.filter(ch => ch.selected).length }} Channel(s)</h3>
+    <div v-if="showBulkEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full">
+        <h3 class="text-base sm:text-lg font-medium mb-4">Move {{ channels.filter(ch => ch.selected).length }} Channel(s)</h3>
         <p class="text-sm text-gray-600 mb-4">Select the destination group for the selected channels:</p>
         <select
           v-model="bulkMoveTargetGroup"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4"
+          class="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4 text-base"
         >
           <option value="">-- Select Group --</option>
           <option v-for="group in groups" :key="group.id" :value="group.id">
             {{ group.name }}
           </option>
         </select>
-        <div class="flex justify-end space-x-2">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-0 sm:space-x-2">
           <button
             @click="cancelBulkEdit"
-            class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            class="min-h-touch sm:min-h-0 px-4 py-3 sm:py-2 border border-gray-300 rounded-md hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             @click="executeBulkMove"
             :disabled="!bulkMoveTargetGroup"
-            class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300"
+            class="min-h-touch sm:min-h-0 px-4 py-3 sm:py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300"
           >
             Move Channels
           </button>
