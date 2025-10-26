@@ -1,5 +1,9 @@
 # IPTV Manager
 
+[![Docker Hub](https://img.shields.io/badge/docker%20hub-fpipio%2Fiptv--manager-blue?logo=docker)](https://hub.docker.com/r/fpipio/iptv-manager)
+[![Docker Image](https://img.shields.io/badge/docker-latest-blue)](https://hub.docker.com/r/fpipio/iptv-manager)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Web application for managing and organizing IPTV M3U playlists with channel grouping, reordering, and export capabilities.
 
 > 📋 **Per lo stato del progetto e il piano di sviluppo, consulta [ROADMAP.md](ROADMAP.md)**
@@ -24,7 +28,26 @@ Web application for managing and organizing IPTV M3U playlists with channel grou
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### Using Docker Hub (Fastest)
+
+Pull and run the pre-built image from Docker Hub:
+
+```bash
+# Pull the latest image
+docker pull fpipio/iptv-manager:latest
+
+# Run with persistent data
+docker run -d \
+  --name iptv-manager \
+  -p 3000:3000 \
+  -v iptv-data:/app/data \
+  fpipio/iptv-manager:latest
+
+# Access the application
+open http://localhost:3000
+```
+
+### Using Docker Compose (Recommended)
 
 ```bash
 # Build and start the container
