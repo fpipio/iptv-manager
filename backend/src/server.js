@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { runMigrations } = require('./db/migrate');
+const epgScheduler = require('./services/epgScheduler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,11 @@ try {
   console.error('Failed to run migrations:', error);
   process.exit(1);
 }
+
+// Initialize EPG scheduler
+epgScheduler.initialize().catch(error => {
+  console.error('Failed to initialize EPG scheduler:', error);
+});
 
 // Middleware
 app.use(cors());

@@ -61,6 +61,20 @@
 
       <!-- Movies Tab Content -->
       <div v-if="activeTab === 'movies'">
+      <!-- Import M3U Movies -->
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
+        <h2 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+          </svg>
+          Import Movies Playlist
+        </h2>
+        <p class="text-sm text-gray-600 mb-4">
+          Import movies from M3U playlist files or URLs
+        </p>
+        <MoviesImportTab />
+      </div>
+
       <!-- Integrations Card -->
       <div class="bg-white rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
         <h2 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center">
@@ -180,6 +194,9 @@
 
       <!-- Channels Tab Content -->
       <div v-if="activeTab === 'channels'">
+      <!-- Import M3U Playlist -->
+      <ChannelsImportSettings />
+
       <!-- EPG Info Card -->
       <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
         <div class="flex items-start gap-3 sm:gap-0">
@@ -206,6 +223,68 @@
             </a>
             <p class="text-xs text-blue-700 mt-3">
               The EPG Matching page allows you to map your channels to these sources for automatic program guide updates.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Automatic EPG Grab Card -->
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-semibold">⏰ Automatic EPG Grab</h2>
+            <p class="text-sm text-gray-500 mt-1">Schedule automatic EPG updates</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              v-model="autoGrabEnabled"
+              @change="saveAutoGrabConfig"
+              class="sr-only peer"
+            />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <span class="ms-3 text-sm font-medium" :class="autoGrabEnabled ? 'text-gray-900' : 'text-gray-400'">
+              {{ autoGrabEnabled ? 'Enabled' : 'Disabled' }}
+            </span>
+          </label>
+        </div>
+
+        <div v-if="autoGrabEnabled" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Schedule (Cron Expression)
+            </label>
+            <input
+              v-model="autoGrabSchedule"
+              type="text"
+              placeholder="0 */6 * * *"
+              class="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-base"
+              @change="saveAutoGrabConfig"
+            />
+            <p class="mt-1 text-xs text-gray-500">Format: minute hour day month weekday</p>
+          </div>
+
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p class="text-sm font-medium text-blue-900 mb-2">Common Schedules:</p>
+            <div class="space-y-1 text-xs text-blue-800">
+              <button @click="setSchedule('0 */6 * * *')" class="block hover:underline text-left w-full">
+                • <code class="bg-blue-100 px-1 rounded">0 */6 * * *</code> - Every 6 hours
+              </button>
+              <button @click="setSchedule('0 */12 * * *')" class="block hover:underline text-left w-full">
+                • <code class="bg-blue-100 px-1 rounded">0 */12 * * *</code> - Every 12 hours
+              </button>
+              <button @click="setSchedule('0 2 * * *')" class="block hover:underline text-left w-full">
+                • <code class="bg-blue-100 px-1 rounded">0 2 * * *</code> - Daily at 2:00 AM
+              </button>
+              <button @click="setSchedule('0 6 * * *')" class="block hover:underline text-left w-full">
+                • <code class="bg-blue-100 px-1 rounded">0 6 * * *</code> - Daily at 6:00 AM
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p class="text-xs text-yellow-800">
+              <strong>⚠️ Note:</strong> Scheduled grabs will use the current EPG configuration (Days to Grab, Max Connections) from below.
             </p>
           </div>
         </div>
@@ -545,11 +624,15 @@
 import axios from 'axios';
 import draggable from 'vuedraggable';
 import { useToast } from '../composables/useToast';
+import ChannelsImportSettings from '../components/settings/ChannelsImportSettings.vue';
+import MoviesImportTab from '../components/movies/MoviesImportTab.vue';
 
 export default {
   name: 'SettingsView',
   components: {
-    draggable
+    draggable,
+    ChannelsImportSettings,
+    MoviesImportTab
   },
   setup() {
     const { addToast } = useToast();
@@ -563,6 +646,8 @@ export default {
         grab_days: '3',
         max_connections: '1'
       },
+      autoGrabEnabled: false,
+      autoGrabSchedule: '0 */6 * * *',
       status: null,
       showAddSourceModal: false,
       editingSource: null,
@@ -605,6 +690,10 @@ export default {
         this.sources = sourcesRes.data.sort((a, b) => (a.priority || 999) - (b.priority || 999));
         this.config = configRes.data;
         this.status = statusRes.data;
+
+        // Load auto-grab config
+        this.autoGrabEnabled = configRes.data.auto_grab_enabled === '1';
+        this.autoGrabSchedule = configRes.data.auto_grab_schedule || '0 */6 * * *';
 
         // Load Emby config
         if (embyRes.data.data) {
@@ -656,6 +745,31 @@ export default {
         console.error('Error saving config:', error);
         this.addToast('Failed to save configuration', 'error');
       }
+    },
+    async saveAutoGrabConfig() {
+      try {
+        await axios.put('/api/epg/config', {
+          auto_grab_enabled: this.autoGrabEnabled ? '1' : '0',
+          auto_grab_schedule: this.autoGrabSchedule
+        });
+        if (this.addToast) {
+          this.addToast(
+            this.autoGrabEnabled
+              ? `Auto-grab enabled (${this.autoGrabSchedule})`
+              : 'Auto-grab disabled',
+            'success'
+          );
+        }
+      } catch (error) {
+        console.error('Error saving auto-grab config:', error);
+        if (this.addToast) {
+          this.addToast('Failed to save auto-grab configuration', 'error');
+        }
+      }
+    },
+    setSchedule(schedule) {
+      this.autoGrabSchedule = schedule;
+      this.saveAutoGrabConfig();
     },
     async toggleSourceEnabled(source) {
       try {

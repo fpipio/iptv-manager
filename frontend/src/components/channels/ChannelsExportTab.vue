@@ -119,10 +119,70 @@
       </div>
     </div>
 
+    <!-- EPG Section -->
+    <div class="mt-8 pt-8 border-t border-gray-200">
+      <h2 class="text-2xl font-bold mb-4">📅 EPG Guide</h2>
+      <p class="text-gray-600 mb-6">
+        Electronic Program Guide in XMLTV format
+      </p>
+
+      <!-- EPG URL Card -->
+      <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h3 class="text-lg font-semibold mb-2 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          EPG URL
+        </h3>
+        <p class="text-sm text-gray-500 mb-3">
+          Use this URL in your IPTV player for program guide data
+        </p>
+
+        <!-- URL Box -->
+        <div class="bg-gray-50 rounded-md p-3 mb-3 border border-gray-200 flex items-center">
+          <code class="text-sm text-gray-800 flex-1 break-all mr-2">{{ epgUrl }}</code>
+          <button
+            @click="copyEpgUrl"
+            class="flex-shrink-0 px-3 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-colors"
+            title="Copy URL"
+          >
+            <svg v-if="!copiedEpg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Grab EPG Data Button -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold mb-4">EPG Data</h3>
+        <button
+          @click="grabEpgData"
+          :disabled="grabbingEpg"
+          class="w-full bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+        >
+          <span v-if="grabbingEpg" class="flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Grabbing EPG Data...
+          </span>
+          <span v-else>Grab EPG Data</span>
+        </button>
+        <p class="text-xs text-gray-500 mt-2 text-center">
+          Fetch program guide data for mapped channels (may take several minutes)
+        </p>
+      </div>
+    </div>
+
     <!-- Toast Notification -->
     <div
       v-if="toast.show"
-      class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm border-l-4 transition-all"
+      class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm border-l-4 transition-all z-50"
       :class="toast.type === 'success' ? 'border-green-500' : 'border-red-500'"
     >
       <div class="flex items-start">
@@ -139,6 +199,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'ChannelsExportTab',
   data() {
@@ -153,6 +215,9 @@ export default {
       loadingStats: true,
       regenerating: false,
       copied: false,
+      copiedEpg: false,
+      grabbingEpg: false,
+      epgConfig: {},
       toast: {
         show: false,
         message: '',
@@ -164,10 +229,15 @@ export default {
     playlistUrl() {
       const baseUrl = window.location.origin;
       return `${baseUrl}/output/playlist.m3u`;
+    },
+    epgUrl() {
+      const baseUrl = window.location.origin;
+      return `${baseUrl}/api/epg/xml`;
     }
   },
   mounted() {
     this.loadStats();
+    this.loadEpgConfig();
   },
   methods: {
     async loadStats() {
@@ -237,6 +307,54 @@ export default {
       setTimeout(() => {
         this.toast.show = false;
       }, 3000);
+    },
+
+    async loadEpgConfig() {
+      try {
+        const response = await fetch('/api/epg/config');
+        if (response.ok) {
+          this.epgConfig = await response.json();
+        }
+      } catch (error) {
+        console.error('Failed to load EPG config:', error);
+        this.epgConfig = { grab_days: '3' }; // Fallback to default
+      }
+    },
+
+    async copyEpgUrl() {
+      try {
+        await navigator.clipboard.writeText(this.epgUrl);
+        this.copiedEpg = true;
+        this.showToast('EPG URL copied to clipboard!', 'success');
+        setTimeout(() => {
+          this.copiedEpg = false;
+        }, 2000);
+      } catch (error) {
+        console.error('Copy failed:', error);
+        this.showToast('Failed to copy URL', 'error');
+      }
+    },
+
+    async grabEpgData() {
+      this.grabbingEpg = true;
+      try {
+        const grabDays = parseInt(this.epgConfig.grab_days) || 3;
+        const maxConnections = parseInt(this.epgConfig.max_connections) || 1;
+        const timeout = parseInt(this.epgConfig.timeout_ms) || 60000;
+
+        const response = await axios.post('/api/epg/grab-custom', {
+          days: grabDays,
+          maxConnections: maxConnections,
+          timeout: timeout
+        });
+
+        this.showToast(`EPG grab completed! Channels: ${response.data.channelsGrabbed}, Programs: ${response.data.programsGrabbed}`, 'success');
+      } catch (error) {
+        console.error('Error grabbing EPG:', error);
+        this.showToast('Failed to grab EPG: ' + (error.response?.data?.error || error.message), 'error');
+      } finally {
+        this.grabbingEpg = false;
+      }
     }
   }
 };

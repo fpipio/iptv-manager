@@ -3,6 +3,7 @@ const router = express.Router();
 const epgService = require('../services/epgService');
 const epgChannelsParser = require('../services/epgChannelsParser');
 const epgMatchingService = require('../services/epgMatchingService');
+const epgScheduler = require('../services/epgScheduler');
 
 /**
  * GET /api/epg/sources
@@ -131,9 +132,20 @@ router.get('/config', async (req, res) => {
 router.put('/config', async (req, res) => {
   try {
     const updates = req.body;
+    let scheduleChanged = false;
 
     for (const [key, value] of Object.entries(updates)) {
       await epgService.updateConfig(key, value);
+
+      // Track if scheduling config changed
+      if (key === 'auto_grab_enabled' || key === 'auto_grab_schedule') {
+        scheduleChanged = true;
+      }
+    }
+
+    // Reload scheduler if scheduling config changed
+    if (scheduleChanged) {
+      await epgScheduler.reloadSchedule();
     }
 
     const config = await epgService.getConfig();

@@ -22,17 +22,18 @@
 
 ## 🎯 Stato Attuale
 
-**Ultimo Aggiornamento**: 2025-10-25
+**Ultimo Aggiornamento**: 2025-11-29
 
-**Versione Corrente**: v0.9.11-dev
+**Versione Corrente**: v0.9.14-dev
 
-**Fase Corrente**: 🟢 **Fase 9** (Mobile Responsive Design - 90% completata) + **EPG Channel Search** + **Settings Reorganization**
+**Fase Corrente**: 🟢 **Fase 9** (Mobile Responsive Design - 90% completata) + **Fase 5.12** (Import to Settings - 100% completata)
 
 **Prossima Fase**: Testing & validation Fase 9 → Fase 3.2 (Serie TV)
 
 ### Funzionalità Operative
 - ✅ **🎨 Tab-Based Navigation UI** (architettura frontend refactored: 3 aree principali - Channels, Movies, Settings - con tabs interno per feature grouping)
-- ✅ **Import M3U asincrono con progress bar** (file upload + URL, dual-tab TV|Movies, batch processing 500 items)
+- ✅ **📋 Import M3U in Settings** (Import channels e movies spostato in Settings > Channels/Movies per logica UX configurazione iniziale)
+- ✅ **Import M3U asincrono con progress bar** (file upload + URL, duplicate strategy modal, batch processing 500 items)
 - ✅ Gestione completa canali TV (CRUD, drag & drop, bulk edit, selezione multipla)
 - ✅ Gestione gruppi (CRUD, riordinamento, gruppo speciale "Unassigned")
 - ✅ **Ricerca canali real-time** (search bar con filtro su nome, tvg-id, logo URL)
@@ -49,6 +50,8 @@
 - ✅ **🔗 EPG Matching = Playlist Alignment** (EPG matching mostra solo canali esportati, manual mappings preservati)
 - ✅ **🎯 UI Reorganization** (Channels: 3 tab Manage|EPG|Import&Export; Movies: 4 tab riordinati; Settings: 3 tab Channels|Movies|Advanced senza Output Streams)
 - ✅ **🔍 EPG Channel Search** (ricerca real-time canali in EPG Matching tab per nome, tvg-id, EPG source, EPG channel)
+- ✅ **⏰ Automatic EPG Grab Scheduler** (schedulazione automatica grab EPG con cron expressions, toggle enable/disable, UI configurazione in Settings)
+- ✅ **🔧 EPG Days Config Fix** (GUI ora usa grab_days dal database invece di valore hardcoded, fix bug 1 vs 3 giorni)
 - ✅ **⚙️ Settings Reorganization** (STRM Output Directory spostato da Movies > Library a Settings > Movies per logica configurazione)
 - ✅ **Danger Zone centralizzata** (reset granulare TV/Movies in Settings > Advanced tab)
 - 🟢 **📱 Mobile Responsive Design** (navigation hamburger, dual-layout tables/cards, touch-friendly controls, Tailwind mobile-first config, 90% completato - testing pending)
@@ -58,7 +61,6 @@
 ### Funzionalità Mancanti
 - ❌ Gestione Serie TV
 - ❌ Filtri avanzati (per gruppo, stato, modifiche)
-- ❌ Schedulazione automatica EPG
 - ❌ Mobile PWA (Progressive Web App)
 
 ---
@@ -292,13 +294,16 @@ Import | Manage | Movies | Export | Settings | EPG Matching
 └─ Export            └─ Year Organization
 ```
 
-**✅ DOPO Fase 5.8** (UI Reorganization - ottimizzato):
+**✅ DOPO Fase 5.9** (Import in Settings - final UX):
 ```
 📺 Channels             🎬 Movies              ⚙️ Settings
-├─ Manage               ├─ Library             ├─ Channels (EPG config)
-├─ EPG                  ├─ Cleanup             ├─ Movies (Integrations)
-└─ Import & Export      ├─ Year Organization   └─ Advanced (Danger Zone)
-                        └─ Import
+├─ Manage               ├─ Library             ├─ Channels
+├─ EPG                  ├─ Cleanup             │  ├─ Import M3U
+└─ Export               ├─ Year Organization   │  └─ EPG Config
+                        └─ (Import rimosso)    ├─ Movies
+                                               │  ├─ Import M3U
+                                               │  └─ Integrations
+                                               └─ Advanced (Danger Zone)
 ```
 
 #### **Modifiche Implementate** (Fase 5.5 - successivamente ottimizzato in Fase 5.8)
@@ -858,6 +863,242 @@ Movies > Library: Legge directory (usa per operazioni STRM)
 - ✅ **Workflow chiaro**: Settings prima (configura directory) → Movies poi (usa directory)
 - ✅ **Zero duplicazione**: Una sola fonte di verità per directory config
 - ✅ **Backward compatible**: Operazioni STRM funzionano identicamente
+
+### **Fase 5.11** - EPG Improvements (100%) 🆕
+- **⏰ Automatic EPG Grab Scheduler + 🔧 EPG Days Config Fix**
+- **Data completamento**: 2025-11-28
+
+### **Fase 5.12** - Import to Settings (100%) 🆕
+- **📋 Import spostato in Settings per logica UX migliorata**
+- **Data completamento**: 2025-11-29
+
+#### **Problema risolto**
+- **Import come configurazione iniziale**: Import M3U è un'operazione di setup iniziale/periodica, non un'azione frequente
+- **Confusione navigazione**: Import era mescolato con operazioni quotidiane (Manage, Export) in workflow operativi
+- **Mental model poco chiaro**: Utenti si aspettano Import in Settings come "configurazione sorgente dati"
+
+#### **Soluzione implementata**
+
+**1. Channels > Import rimosso**:
+- Tab "Import & Export" → rinominato in "Export"
+- Import M3U spostato in Settings > Channels
+
+**2. Movies > Import rimosso**:
+- Tab "Import" completamente rimosso da MoviesView
+- 3 tab rimanenti: Library, Cleanup, Year Organization
+
+**3. Settings > Channels - Import aggiunto**:
+- Nuovo componente `ChannelsImportSettings.vue`
+- Funzionalità completa: Upload file, URL, duplicate strategy, progress tracking
+- Posizionato PRIMA della configurazione EPG (workflow logico: Import → Configure EPG)
+
+**4. Settings > Movies - Import aggiunto**:
+- Riutilizzo componente esistente `MoviesImportTab.vue`
+- Posizionato PRIMA delle integrazioni (workflow logico: Import → Configure integrations)
+
+**5. Channels > Export tab aggiornato**:
+- `ChannelsExportTab.vue` esteso con sezione EPG
+- Export + EPG URLs + Grab EPG button in un unico tab
+- Workflow: Manage → EPG → Export (logico per operazioni quotidiane)
+
+#### **Architettura componenti**
+
+**Nuovi componenti**:
+- `frontend/src/components/settings/ChannelsImportSettings.vue` (400+ righe)
+
+**Componenti modificati**:
+- `frontend/src/components/channels/ChannelsExportTab.vue` (+80 righe - aggiunta sezione EPG)
+- `frontend/src/views/ChannelsView.vue` (3 tab: Manage, EPG, Export)
+- `frontend/src/views/MoviesView.vue` (3 tab: Library, Cleanup, Year Organization)
+- `frontend/src/views/SettingsView.vue` (import ChannelsImportSettings e MoviesImportTab)
+
+**Componenti rimossi/deprecati**:
+- `ChannelsImportExportTab.vue` → non più usato (funzionalità splittate)
+
+#### **Navigazione finale**
+
+**Channels** (3 tab):
+```
+├─ Manage (verde) - CRUD canali/gruppi, search, drag&drop
+├─ EPG (viola) - EPG matching, auto-match, manual mapping
+└─ Export (arancione) - Playlist URL, download, EPG URL, grab EPG
+```
+
+**Movies** (3 tab):
+```
+├─ Library (verde) - Browse, search, STRM generation, Emby refresh
+├─ Cleanup (arancione) - Pattern cleaning, actor names removal
+└─ Year Organization (viola) - Year libraries config, stats
+```
+
+**Settings** (3 tab):
+```
+├─ Channels (blu)
+│  ├─ Import M3U Playlist (nuovo!)
+│  ├─ EPG Sources Info
+│  ├─ Automatic EPG Grab
+│  ├─ EPG Configuration
+│  └─ EPG Sources List
+├─ Movies (viola)
+│  ├─ Import M3U Movies (nuovo!)
+│  ├─ Emby Integration
+│  └─ STRM File Configuration
+└─ Advanced (rosso)
+   └─ Danger Zone (reset actions)
+```
+
+#### **Benefits**
+
+1. **UX migliorata**:
+   - Import come "setup/configuration" in Settings (mental model chiaro)
+   - Operazioni quotidiane (Manage, Export) separate da setup iniziale
+   - Riduzione tab in Channels e Movies (3 invece di 4)
+
+2. **Workflow logico**:
+   - Settings: Import → Configure → Integrate
+   - Channels: Manage → Match EPG → Export
+   - Movies: Browse → Organize → Cleanup
+
+3. **Manutenibilità**:
+   - Componenti import isolati e riutilizzabili
+   - Settings come "single source of truth" per configurazioni
+   - Zero duplicazione logica
+
+4. **Backward Compatible**:
+   - Zero modifiche backend API
+   - Funzionalità identiche, solo UI riorganizzata
+   - Database migrations non richieste
+
+#### **Testing**
+- ✅ Build frontend completato senza errori (2.85s)
+- ✅ Container Docker riavviato con successo
+- ✅ Import M3U channels funzionante in Settings > Channels
+- ✅ Import M3U movies funzionante in Settings > Movies
+- ✅ Export tab con EPG funzionante in Channels > Export
+- ✅ Navigazione tab corretta in tutte le view
+
+#### **1. Automatic EPG Grab Scheduler**
+
+**Problema risolto**: Gli utenti dovevano ricordare di fare grab EPG manualmente, rischiando guide TV obsolete.
+
+**Soluzione**: Sistema di schedulazione automatica con cron expressions.
+
+**Backend Implementation**:
+- **Dependency**: Aggiunto `node-cron@^3.0.3` a `package.json`
+- **Nuovo service**: `backend/src/services/epgScheduler.js` (147 righe)
+  - Inizializzazione automatica all'avvio server
+  - Supporto cron expressions con validazione
+  - Reload dinamico quando cambia configurazione
+  - Logging completo operazioni (start, stop, grab execution)
+  - Error handling robusto (grab failures non crashano scheduler)
+- **Server integration**: `server.js` inizializza scheduler dopo migrations
+- **API integration**: `PUT /api/epg/config` ricarica scheduler se `auto_grab_enabled` o `auto_grab_schedule` cambiano
+
+**Frontend Implementation**:
+- **Nuovo componente UI** in `SettingsView.vue` - Sezione "⏰ Automatic EPG Grab"
+  - Toggle Enable/Disable con switch animato
+  - Campo cron expression con validazione e font monospace
+  - Quick schedules preconfigurate (4 opzioni):
+    - Every 6 hours: `0 */6 * * *`
+    - Every 12 hours: `0 */12 * * *`
+    - Daily at 2:00 AM: `0 2 * * *`
+    - Daily at 6:00 AM: `0 6 * * *`
+  - Help text per formato cron
+  - Note informative (scheduled grabs usano EPG config corrente)
+
+**Database**:
+- Campi già esistenti in `epg_config` (nessuna migration richiesta):
+  - `auto_grab_enabled`: '0' | '1'
+  - `auto_grab_schedule`: cron expression (default: '0 */6 * * *')
+
+**Caratteristiche**:
+- ✅ Non-blocking: Grab eseguito in background, non blocca server
+- ✅ Persistent: Configurazione salvata in database, sopravvive a restart
+- ✅ Reload dinamico: Cambio schedule → scheduler si ricarica automaticamente
+- ✅ Validazione: Cron expressions invalide vengono rifiutate
+- ✅ Logging: Tutte le operazioni loggiate in console (visibili con `docker logs`)
+
+**Esempio log**:
+```
+[EPG Scheduler] Initializing...
+[EPG Scheduler] Config loaded - Enabled: true, Schedule: 0 */12 * * *
+[EPG Scheduler] Starting with schedule: 0 */12 * * *
+[EPG Scheduler] Scheduled task started
+[EPG Scheduler] Executing scheduled EPG grab...
+[EPG Scheduler] ✅ Grab completed! Channels: 75, Programs: 7615
+```
+
+#### **2. EPG Days Config Fix**
+
+**Bug risolto**: GUI aveva **hardcoded `days: 1`** in 2 componenti, ignorando `grab_days` dal database.
+
+**File modificati**:
+1. `frontend/src/components/channels/ChannelsEpgMatchingTab.vue`:
+   - Aggiunto `epgConfig: {}` in `data()`
+   - Aggiunto metodo `loadEpgConfig()` che carica `/api/epg/config`
+   - Modificato `grabCustomEpg()` per usare `parseInt(this.epgConfig.grab_days) || 3`
+
+2. `frontend/src/components/channels/ChannelsImportExportTab.vue`:
+   - Stesse modifiche del componente sopra
+   - Modificato `grabEpgData()` per usare configurazione dal database
+
+**Prima**:
+```javascript
+const res = await axios.post('/api/epg/grab-custom', {
+  days: 1,  // ❌ HARDCODED
+  maxConnections: 1,
+  timeout: 60000
+});
+```
+
+**Dopo**:
+```javascript
+const grabDays = parseInt(this.epgConfig.grab_days) || 3;
+const maxConnections = parseInt(this.epgConfig.max_connections) || 1;
+const timeout = parseInt(this.epgConfig.timeout_ms) || 60000;
+
+const res = await axios.post('/api/epg/grab-custom', {
+  days: grabDays,      // ✅ DA DATABASE
+  maxConnections: maxConnections,
+  timeout: timeout
+});
+```
+
+**Risultato**:
+- ✅ GUI rispetta configurazione database
+- ✅ Utenti possono configurare 1-14 giorni in Settings > Channels > EPG Configuration
+- ✅ Grab manuali e automatici usano stesso valore
+- ✅ Fallback a 3 giorni se configurazione mancante
+
+#### **Benefits Complessivi**
+
+1. **Automazione**:
+   - Zero intervento manuale per aggiornare EPG
+   - Guide TV sempre aggiornata automaticamente
+   - Flessibilità scheduling (ogni ora, giornaliero, settimanale)
+
+2. **UX Migliorata**:
+   - Configurazione intuitiva con quick schedules
+   - Toggle semplice enable/disable
+   - Consistenza: grab manuale e automatico usano stessa config
+
+3. **Affidabilità**:
+   - Scheduler robusto (errori non crashano sistema)
+   - Logging completo per troubleshooting
+   - Validazione cron expressions
+
+4. **Backward Compatible**:
+   - Nessuna migration database richiesta (campi già esistenti)
+   - Scheduler disabled di default (opt-in)
+   - Zero breaking changes
+
+#### **Testing**
+- ✅ Scheduler si inizializza correttamente all'avvio
+- ✅ Toggle enable/disable funziona
+- ✅ Cambio schedule ricarica scheduler
+- ✅ Grab manuale usa configurazione corretta
+- ✅ Quick schedules applicano cron expression corretta
+- ✅ Logging dettagliato visibile in `docker logs`
 
 ### **Fase 9** - Mobile Responsive Design (🟢 90% completata)
 **Status**: 🟢 Quasi Completata | **Priorità**: Alta

@@ -496,6 +496,7 @@ export default {
       grabbing: false,
       stats: {},
       epgChannelsStats: null,
+      epgConfig: {},
       mappings: [],
       channelSearchQuery: '',
       showOnlyUnmapped: false,
@@ -572,7 +573,8 @@ export default {
         await Promise.all([
           this.loadStats(),
           this.loadMappings(),
-          this.loadEpgChannelsStats()
+          this.loadEpgChannelsStats(),
+          this.loadEpgConfig()
         ]);
       } catch (error) {
         console.error('Error loading data:', error);
@@ -603,6 +605,15 @@ export default {
         this.epgChannelsStats = res.data;
       } catch (error) {
         console.error('Error loading EPG channels stats:', error);
+      }
+    },
+    async loadEpgConfig() {
+      try {
+        const res = await axios.get('/api/epg/config');
+        this.epgConfig = res.data;
+      } catch (error) {
+        console.error('Error loading EPG config:', error);
+        this.epgConfig = { grab_days: '3' }; // Fallback to default
       }
     },
     async syncEpgChannels() {
@@ -698,10 +709,14 @@ export default {
       }, 600000); // 10 minutes
 
       try {
+        const grabDays = parseInt(this.epgConfig.grab_days) || 3;
+        const maxConnections = parseInt(this.epgConfig.max_connections) || 1;
+        const timeout = parseInt(this.epgConfig.timeout_ms) || 60000;
+
         const res = await axios.post('/api/epg/grab-custom', {
-          days: 1,
-          maxConnections: 1,
-          timeout: 60000
+          days: grabDays,
+          maxConnections: maxConnections,
+          timeout: timeout
         });
 
         this.toast.success(`EPG grab completed! Channels: ${res.data.channelsGrabbed}, Programs: ${res.data.programsGrabbed}, Sources: ${res.data.sources.join(', ')}`, 5000);

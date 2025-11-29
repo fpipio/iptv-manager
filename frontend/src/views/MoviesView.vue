@@ -118,27 +118,8 @@
               <span class="hidden sm:inline">Year Organization</span>
               <span class="sm:hidden">Years</span>
             </button>
-            <button
-              @click="activeTab = 'import'"
-              :class="[
-                activeTab === 'import'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-3 md:py-4 px-1 border-b-2 font-medium text-xs md:text-sm transition-colors flex items-center gap-1.5 md:gap-2'
-              ]"
-            >
-              <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-              </svg>
-              Import
-            </button>
           </nav>
         </div>
-      </div>
-
-      <!-- Import Tab Content -->
-      <div v-if="activeTab === 'import'" class="bg-white rounded-lg shadow p-6">
-        <MoviesImportTab />
       </div>
 
       <!-- Library Tab Content -->
@@ -480,14 +461,12 @@
 <script>
 import axios from 'axios';
 import { useToast } from '../composables/useToast';
-import MoviesImportTab from '../components/movies/MoviesImportTab.vue';
 import CleanupTab from '../components/movies/CleanupTab.vue';
 import YearLibrariesTab from '../components/movies/YearLibrariesTab.vue';
 
 export default {
   name: 'MoviesView',
   components: {
-    MoviesImportTab,
     CleanupTab,
     YearLibrariesTab
   },
@@ -497,7 +476,7 @@ export default {
   },
   data() {
     return {
-      activeTab: 'library', // 'library', 'cleanup', 'year-libraries', 'import'
+      activeTab: 'library', // 'library', 'cleanup', 'year-libraries'
       movies: [],
       stats: {
         total: 0,

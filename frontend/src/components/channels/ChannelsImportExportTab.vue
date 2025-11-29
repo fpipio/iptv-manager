@@ -380,6 +380,7 @@ export default {
 
       // EPG vars
       grabbingEpg: false,
+      epgConfig: {},
 
       // Toast
       toast: {
@@ -405,6 +406,7 @@ export default {
   },
   mounted() {
     this.loadStats();
+    this.loadEpgConfig();
   },
   beforeUnmount() {
     this.stopPolling();
@@ -582,6 +584,17 @@ export default {
         this.loadingStats = false;
       }
     },
+    async loadEpgConfig() {
+      try {
+        const response = await fetch('/api/epg/config');
+        if (response.ok) {
+          this.epgConfig = await response.json();
+        }
+      } catch (error) {
+        console.error('Failed to load EPG config:', error);
+        this.epgConfig = { grab_days: '3' }; // Fallback to default
+      }
+    },
     async forceRegenerate() {
       this.regenerating = true;
       try {
@@ -645,10 +658,14 @@ export default {
     async grabEpgData() {
       this.grabbingEpg = true;
       try {
+        const grabDays = parseInt(this.epgConfig.grab_days) || 3;
+        const maxConnections = parseInt(this.epgConfig.max_connections) || 1;
+        const timeout = parseInt(this.epgConfig.timeout_ms) || 60000;
+
         const response = await axios.post('/api/epg/grab-custom', {
-          days: 1,
-          maxConnections: 1,
-          timeout: 60000
+          days: grabDays,
+          maxConnections: maxConnections,
+          timeout: timeout
         });
 
         this.showToast(`EPG grab completed! Channels: ${response.data.channelsGrabbed}, Programs: ${response.data.programsGrabbed}`, 'success');

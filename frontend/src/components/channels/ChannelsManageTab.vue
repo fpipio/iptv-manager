@@ -241,92 +241,94 @@
             class="space-y-2"
           >
             <template #item="{ element: channel }">
-            <!-- Mobile: card layout -->
-            <div class="sm:hidden bg-gray-50 rounded p-3 hover:bg-gray-100">
-              <div class="flex items-start gap-2 mb-2">
-                <button class="channel-drag-handle cursor-move text-gray-400 hover:text-gray-600 p-2">
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
-                  </svg>
-                </button>
-                <input
-                  v-if="bulkEditMode"
-                  type="checkbox"
-                  :checked="channel.selected"
-                  @click="handleBulkSelectionClick(channel, group.id, $event)"
-                  class="h-5 w-5 text-purple-600 rounded mt-1"
-                  title="Select for bulk move"
-                />
-                <input
-                  type="checkbox"
-                  :checked="channel.is_exported === 1"
-                  @click="handleExportClick(channel, group.id, $event)"
-                  class="h-5 w-5 text-blue-600 rounded mt-1"
-                  title="Include in export"
-                />
-                <div class="flex-1 min-w-0">
-                  <p class="font-medium text-gray-900 text-sm break-words">
-                    {{ channel.is_name_overridden ? channel.custom_tvg_name : channel.imported_tvg_name }}
-                    <span v-if="channel.is_name_overridden || channel.is_logo_overridden || channel.is_group_overridden" class="text-xs text-blue-600 ml-1">★</span>
-                    <span v-if="channel.original_tvg_id" class="text-xs text-orange-600 ml-1" :title="'Original tvg-id: ' + channel.original_tvg_id">↻</span>
-                  </p>
-                  <p class="text-xs text-gray-500 mt-1 break-all">
-                    ID: {{ channel.tvg_id }}
-                  </p>
-                  <p v-if="channel.original_tvg_id" class="text-xs text-orange-500 mt-1 break-all">
-                    Renamed from: {{ channel.original_tvg_id }}
-                  </p>
+            <div>
+              <!-- Mobile: card layout -->
+              <div class="sm:hidden bg-gray-50 rounded p-3 hover:bg-gray-100">
+                <div class="flex items-start gap-2 mb-2">
+                  <button class="channel-drag-handle cursor-move text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
+                    </svg>
+                  </button>
+                  <input
+                    v-if="bulkEditMode"
+                    type="checkbox"
+                    :checked="channel.selected"
+                    @click="handleBulkSelectionClick(channel, group.id, $event)"
+                    class="h-5 w-5 text-purple-600 rounded mt-1"
+                    title="Select for bulk move"
+                  />
+                  <input
+                    type="checkbox"
+                    :checked="channel.is_exported === 1"
+                    @click="handleExportClick(channel, group.id, $event)"
+                    class="h-5 w-5 text-blue-600 rounded mt-1"
+                    title="Include in export"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium text-gray-900 text-sm break-words">
+                      {{ channel.is_name_overridden ? channel.custom_tvg_name : channel.imported_tvg_name }}
+                      <span v-if="channel.is_name_overridden || channel.is_logo_overridden || channel.is_group_overridden" class="text-xs text-blue-600 ml-1">★</span>
+                      <span v-if="channel.original_tvg_id" class="text-xs text-orange-600 ml-1" :title="'Original tvg-id: ' + channel.original_tvg_id">↻</span>
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1 break-all">
+                      ID: {{ channel.tvg_id }}
+                    </p>
+                    <p v-if="channel.original_tvg_id" class="text-xs text-orange-500 mt-1 break-all">
+                      Renamed from: {{ channel.original_tvg_id }}
+                    </p>
+                  </div>
                 </div>
+                <button
+                  @click="editChannel(channel)"
+                  class="w-full text-blue-600 hover:text-blue-700 text-sm font-medium py-2 px-3 bg-white rounded border border-blue-200 hover:border-blue-300"
+                >
+                  Edit
+                </button>
               </div>
-              <button
-                @click="editChannel(channel)"
-                class="w-full text-blue-600 hover:text-blue-700 text-sm font-medium py-2 px-3 bg-white rounded border border-blue-200 hover:border-blue-300"
-              >
-                Edit
-              </button>
-            </div>
 
-            <!-- Desktop: horizontal layout -->
-            <div class="hidden sm:flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100">
-              <div class="flex items-center space-x-3">
-                <button class="channel-drag-handle cursor-move text-gray-400 hover:text-gray-600">
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
-                  </svg>
-                </button>
-                <input
-                  v-if="bulkEditMode"
-                  type="checkbox"
-                  :checked="channel.selected"
-                  @click="handleBulkSelectionClick(channel, group.id, $event)"
-                  class="h-4 w-4 text-purple-600 rounded"
-                  title="Select for bulk move (Shift+Click for range)"
-                />
-                <input
-                  type="checkbox"
-                  :checked="channel.is_exported === 1"
-                  @click="handleExportClick(channel, group.id, $event)"
-                  class="h-4 w-4 text-blue-600 rounded"
-                  title="Include in export (Shift+Click for range)"
-                />
-                <div class="flex-1">
-                  <p class="font-medium text-gray-900">
-                    {{ channel.is_name_overridden ? channel.custom_tvg_name : channel.imported_tvg_name }}
-                    <span v-if="channel.is_name_overridden || channel.is_logo_overridden || channel.is_group_overridden" class="text-xs text-blue-600 ml-1">★</span>
-                    <span v-if="channel.original_tvg_id" class="text-xs text-orange-600 ml-1" :title="'Original tvg-id: ' + channel.original_tvg_id">↻</span>
-                  </p>
-                  <p class="text-sm text-gray-500">
-                    ID: {{ channel.tvg_id }}
-                    <span v-if="channel.original_tvg_id" class="text-xs text-orange-500 ml-1">(renamed from: {{ channel.original_tvg_id }})</span>
-                  </p>
+              <!-- Desktop: horizontal layout -->
+              <div class="hidden sm:flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100">
+                <div class="flex items-center space-x-3">
+                  <button class="channel-drag-handle cursor-move text-gray-400 hover:text-gray-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
+                    </svg>
+                  </button>
+                  <input
+                    v-if="bulkEditMode"
+                    type="checkbox"
+                    :checked="channel.selected"
+                    @click="handleBulkSelectionClick(channel, group.id, $event)"
+                    class="h-4 w-4 text-purple-600 rounded"
+                    title="Select for bulk move (Shift+Click for range)"
+                  />
+                  <input
+                    type="checkbox"
+                    :checked="channel.is_exported === 1"
+                    @click="handleExportClick(channel, group.id, $event)"
+                    class="h-4 w-4 text-blue-600 rounded"
+                    title="Include in export (Shift+Click for range)"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-gray-900">
+                      {{ channel.is_name_overridden ? channel.custom_tvg_name : channel.imported_tvg_name }}
+                      <span v-if="channel.is_name_overridden || channel.is_logo_overridden || channel.is_group_overridden" class="text-xs text-blue-600 ml-1">★</span>
+                      <span v-if="channel.original_tvg_id" class="text-xs text-orange-600 ml-1" :title="'Original tvg-id: ' + channel.original_tvg_id">↻</span>
+                    </p>
+                    <p class="text-sm text-gray-500">
+                      ID: {{ channel.tvg_id }}
+                      <span v-if="channel.original_tvg_id" class="text-xs text-orange-500 ml-1">(renamed from: {{ channel.original_tvg_id }})</span>
+                    </p>
+                  </div>
                 </div>
+                <button
+                  @click="editChannel(channel)"
+                  class="text-blue-600 hover:text-blue-700 text-sm"
+                >
+                  Edit
+                </button>
               </div>
-              <button
-                @click="editChannel(channel)"
-                class="text-blue-600 hover:text-blue-700 text-sm"
-              >
-                Edit
-              </button>
             </div>
             </template>
           </draggable>
