@@ -60,64 +60,72 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex flex-wrap items-center gap-2 sm:gap-4">
+        <div class="flex flex-nowrap items-center gap-1.5 sm:gap-4 overflow-x-auto pb-1">
           <button
-            @click="syncEpgChannels"
-            :disabled="isAnyOperationRunning"
-            class="px-3 py-2 sm:px-4 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            @click="grabCustomEpg"
+            :disabled="isAnyOperationRunning || stats.mappedChannels === 0"
+            class="flex-shrink-0 px-2 py-2 sm:px-4 text-xs sm:text-base bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
           >
-            <span v-if="syncing" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <span v-if="grabbing" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-1.5 sm:mr-3 h-3 w-3 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Syncing EPG Sources...
+              <span class="hidden sm:inline">Grabbing...</span>
+              <span class="sm:hidden">Grab...</span>
             </span>
-            <span v-else>Sync EPG Sources</span>
+            <template v-else>
+              <div class="flex flex-col items-start">
+                <span class="font-medium">Grab EPG</span>
+                <span v-if="epgConfig.last_grab_at" class="text-[10px] sm:text-xs opacity-90 font-normal">
+                  {{ formatLastGrabDate(epgConfig.last_grab_at) }}
+                </span>
+              </div>
+            </template>
+          </button>
+          <button
+            @click="syncEpgChannels"
+            :disabled="isAnyOperationRunning"
+            class="flex-shrink-0 px-2 py-2 sm:px-4 text-xs sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+          >
+            <span v-if="syncing" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-1.5 sm:mr-3 h-3 w-3 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span class="hidden sm:inline">Syncing...</span>
+              <span class="sm:hidden">Sync...</span>
+            </span>
+            <template v-else>
+              <span class="hidden sm:inline">Sync EPG</span>
+              <span class="sm:hidden">Sync</span>
+            </template>
           </button>
           <button
             @click="runAutoMatching"
             :disabled="isAnyOperationRunning || stats.totalChannels === 0"
-            class="px-3 py-2 sm:px-4 text-sm sm:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            class="flex-shrink-0 px-2 py-2 sm:px-4 text-xs sm:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
           >
             <span v-if="matching" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin -ml-1 mr-1.5 sm:mr-3 h-3 w-3 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span class="hidden sm:inline">Running Auto-Matching...</span>
-              <span class="sm:hidden">Matching...</span>
+              <span class="hidden sm:inline">Matching...</span>
+              <span class="sm:hidden">Match...</span>
             </span>
             <template v-else>
-              <span class="hidden sm:inline">Run Auto-Matching</span>
-              <span class="sm:hidden">Auto-Match</span>
+              <span class="hidden sm:inline">Auto-Match</span>
+              <span class="sm:hidden">Match</span>
             </template>
           </button>
-          <button
-            @click="grabCustomEpg"
-            :disabled="isAnyOperationRunning || stats.mappedChannels === 0"
-            class="px-3 py-2 sm:px-4 text-sm sm:text-base bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            <span v-if="grabbing" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span class="hidden sm:inline">Grabbing EPG Data...</span>
-              <span class="sm:hidden">Grabbing...</span>
-            </span>
-            <template v-else>
-              <span class="hidden sm:inline">Grab EPG Data</span>
-              <span class="sm:hidden">Grab EPG</span>
-            </template>
-          </button>
-          <label class="ml-auto flex items-center cursor-pointer">
+          <label class="ml-auto flex items-center cursor-pointer flex-shrink-0">
             <input
               v-model="showOnlyUnmapped"
               type="checkbox"
-              class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              class="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
             />
-            <span class="ml-2 text-xs sm:text-sm text-gray-700"><span class="hidden sm:inline">Show only unmapped</span><span class="sm:hidden">Unmapped</span></span>
+            <span class="ml-1.5 sm:ml-2 text-xs sm:text-sm text-gray-700 whitespace-nowrap">Unmapped</span>
           </label>
         </div>
       </div>
@@ -910,6 +918,27 @@ export default {
         default:
           return 'bg-gray-100 text-gray-800';
       }
+    },
+    formatLastGrabDate(dateString) {
+      if (!dateString) return '';
+
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays}d ago`;
+
+      // Format as date for older entries
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      return `${day}/${month}`;
     }
   }
 };

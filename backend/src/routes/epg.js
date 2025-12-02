@@ -118,6 +118,24 @@ router.delete('/sources/:id', async (req, res) => {
 router.get('/config', async (req, res) => {
   try {
     const config = await epgService.getConfig();
+
+    // Add last grab info
+    const db = require('../db/database');
+    const lastGrab = db.prepare(`
+      SELECT completed_at, status, channels_grabbed, programs_grabbed
+      FROM epg_grab_logs
+      WHERE status IN ('success', 'error')
+      ORDER BY completed_at DESC
+      LIMIT 1
+    `).get();
+
+    if (lastGrab) {
+      config.last_grab_at = lastGrab.completed_at;
+      config.last_grab_status = lastGrab.status;
+      config.last_grab_channels = lastGrab.channels_grabbed;
+      config.last_grab_programs = lastGrab.programs_grabbed;
+    }
+
     res.json(config);
   } catch (error) {
     console.error('[EPG] Error fetching config:', error);
